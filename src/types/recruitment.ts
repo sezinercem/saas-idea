@@ -7,6 +7,11 @@ export type Candidate = {
   phone: string | null;
   status: string | null;
   notes: string | null;
+  next_follow_up_date: string | null;
+  follow_up_reason: string | null;
+  right_to_work_status: string | null;
+  compliance_status: string | null;
+  compliance_expiry_date: string | null;
   created_at: string | null;
 };
 
@@ -37,13 +42,22 @@ export type PlacementWithRelations = Placement & {
   jobs: Pick<Job, "id" | "company_name" | "job_title" | "location"> | null;
 };
 
+export type CandidateStatus = "New" | "Contacted" | "Interviewing" | "Placed" | "Archived";
+export type JobStatus = "Draft" | "Open" | "Interviewing" | "Filled" | "Closed";
+export type ComplianceStatus = "Missing" | "Pending" | "Complete" | "Expiring Soon";
+
 export type CandidateInput = {
   first_name: string;
   last_name: string;
   email: string;
   phone: string;
-  status: string;
+  status: CandidateStatus;
   notes: string;
+  next_follow_up_date: string;
+  follow_up_reason: string;
+  right_to_work_status: string;
+  compliance_status: ComplianceStatus;
+  compliance_expiry_date: string;
 };
 
 export type JobInput = {
@@ -51,7 +65,7 @@ export type JobInput = {
   job_title: string;
   location: string;
   pay_rate: string;
-  status: string;
+  status: JobStatus;
   notes: string;
 };
 

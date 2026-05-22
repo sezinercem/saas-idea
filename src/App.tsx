@@ -8,6 +8,7 @@ import { AccountPage } from "./pages/AccountPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
+import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { CandidateDetailPage } from "./features/candidates/CandidateDetailPage";
 import { CandidatesPage } from "./features/candidates/CandidatesPage";
@@ -38,6 +39,9 @@ function App() {
                 <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
                 <Route path="/placements" element={<PlacementsPage />} />
+                <Route path="/compliance" element={<PlaceholderPage type="compliance" />} />
+                <Route path="/follow-ups" element={<PlaceholderPage type="followups" />} />
+                <Route path="/reports" element={<PlaceholderPage type="reports" />} />
                 <Route path="/account" element={<AccountPage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

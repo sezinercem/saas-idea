@@ -120,8 +120,10 @@ export function CandidatesPage() {
                   <tr>
                     <th className="px-5 py-4">Name</th>
                     <th className="px-5 py-4">Contact</th>
-                    <th className="px-5 py-4">Status</th>
-                    <th className="px-5 py-4">Created</th>
+                      <th className="px-5 py-4">Workflow</th>
+                      <th className="px-5 py-4">Compliance</th>
+                      <th className="px-5 py-4">Follow-up</th>
+                      <th className="px-5 py-4">Created</th>
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -140,6 +142,10 @@ export function CandidatesPage() {
                       <td className="px-5 py-4">
                         <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
                       </td>
+                      <td className="px-5 py-4">
+                        <Badge tone={statusTone(candidate.compliance_status)}>{candidate.compliance_status || "Missing"}</Badge>
+                      </td>
+                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(candidate.next_follow_up_date)}</td>
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(candidate.created_at)}</td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
@@ -167,8 +173,12 @@ export function CandidatesPage() {
                       </Link>
                       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{candidate.email || "No email"}</p>
                     </div>
-                    <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
+                      <Badge tone={statusTone(candidate.compliance_status)}>{candidate.compliance_status || "Missing"}</Badge>
+                    </div>
                   </div>
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Follow-up {formatDate(candidate.next_follow_up_date)}</p>
                   <div className="mt-4 flex gap-2">
                     <Button variant="outline" onClick={() => openEditModal(candidate)}>
                       Edit

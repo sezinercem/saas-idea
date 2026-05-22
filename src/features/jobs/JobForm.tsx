@@ -3,16 +3,15 @@ import { Select } from "../../components/forms/Select";
 import { Textarea } from "../../components/forms/Textarea";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import type { Job, JobInput } from "../../types/recruitment";
-
-const statuses = ["Active", "Draft", "Paused", "Closed"].map((status) => ({ label: status, value: status }));
+import { jobStatuses, statusOptions } from "../../lib/workflow";
+import type { Job, JobInput, JobStatus } from "../../types/recruitment";
 
 const emptyJob: JobInput = {
   company_name: "",
   job_title: "",
   location: "",
   pay_rate: "",
-  status: "Active",
+  status: "Open",
   notes: "",
 };
 
@@ -30,7 +29,7 @@ export function JobForm({ job, onCancel, onSubmit }: JobFormProps) {
           job_title: job.job_title ?? "",
           location: job.location ?? "",
           pay_rate: job.pay_rate ?? "",
-          status: job.status ?? "Active",
+          status: normalizeJobStatus(job.status),
           notes: job.notes ?? "",
         }
       : emptyJob,
@@ -71,7 +70,7 @@ export function JobForm({ job, onCancel, onSubmit }: JobFormProps) {
         <Input label="Location" value={form.location} onChange={(event) => updateField("location", event.target.value)} />
         <Input label="Pay rate" value={form.pay_rate} placeholder="£18/hr" onChange={(event) => updateField("pay_rate", event.target.value)} />
       </div>
-      <Select label="Status" options={statuses} value={form.status} onChange={(event) => updateField("status", event.target.value)} />
+      <Select label="Status" options={statusOptions(jobStatuses)} value={form.status} onChange={(event) => updateField("status", event.target.value)} />
       <Textarea label="Notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} />
       {error ? <p className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p> : null}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -84,4 +83,11 @@ export function JobForm({ job, onCancel, onSubmit }: JobFormProps) {
       </div>
     </form>
   );
+}
+
+function normalizeJobStatus(status: string | null): JobStatus {
+  if (status === "Active") return "Open";
+  if (status === "Paused") return "Interviewing";
+  if (jobStatuses.includes(status as JobStatus)) return status as JobStatus;
+  return "Open";
 }

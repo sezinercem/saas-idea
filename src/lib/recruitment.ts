@@ -2,11 +2,14 @@ import { supabase } from "./supabase";
 import type {
   Candidate,
   CandidateInput,
+  CandidateStatus,
   Job,
   JobInput,
+  JobStatus,
   PlacementInput,
   PlacementWithRelations,
 } from "../types/recruitment";
+import { candidateStatuses, daysFromNowISO, todayISO } from "./workflow";
 
 function getClient() {
   if (!supabase) {
@@ -14,6 +17,14 @@ function getClient() {
   }
 
   return supabase;
+}
+
+function cleanCandidateInput(input: CandidateInput) {
+  return {
+    ...input,
+    next_follow_up_date: input.next_follow_up_date || null,
+    compliance_expiry_date: input.compliance_expiry_date || null,
+  };
 }
 
 export async function listCandidates(search = "") {
@@ -38,7 +49,7 @@ export async function getCandidate(id: string) {
 export async function createCandidate(createdBy: string, input: CandidateInput) {
   const { data, error } = await getClient()
     .from("candidates")
-    .insert({ ...input, created_by: createdBy })
+    .insert({ ...cleanCandidateInput(input), created_by: createdBy })
     .select()
     .single();
   if (error) throw error;
@@ -46,7 +57,13 @@ export async function createCandidate(createdBy: string, input: CandidateInput) 
 }
 
 export async function updateCandidate(id: string, input: CandidateInput) {
-  const { data, error } = await getClient().from("candidates").update(input).eq("id", id).select().single();
+  const { data, error } = await getClient().from("candidates").update(cleanCandidateInput(input)).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCandidateStatus(id: string, status: CandidateStatus) {
+  const { data, error } = await getClient().from("candidates").update({ status }).eq("id", id).select().single();
   if (error) throw error;
   return data;
 }
@@ -87,6 +104,12 @@ export async function updateJob(id: string, input: JobInput) {
   return data;
 }
 
+export async function updateJobStatus(id: string, status: JobStatus) {
+  const { data, error } = await getClient().from("jobs").update({ status }).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
 export async function deleteJob(id: string) {
   const { error } = await getClient().from("jobs").delete().eq("id", id);
   if (error) throw error;
@@ -96,6 +119,39 @@ export async function listPlacements() {
   const { data, error } = await getClient()
     .from("placements")
     .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as PlacementWithRelations[];
+}
+
+export async function listRecentPlacements(limit = 5) {
+  const { data, error } = await getClient()
+    .from("placements")
+    .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []) as PlacementWithRelations[];
+}
+
+export async function listCandidatePlacements(candidateId: string) {
+  const { data, error } = await getClient()
+    .from("placements")
+    .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
+    .eq("candidate_id", candidateId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as PlacementWithRelations[];
+}
+
+export async function listJobPlacements(jobId: string) {
+  const { data, error } = await getClient()
+    .from("placements")
+    .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
+    .eq("job_id", jobId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -120,46 +176,92 @@ export async function deletePlacement(id: string) {
 
 export async function getDashboardMetrics() {
   const client = getClient();
-  const [candidates, activeJobs, placements, recentCandidates, recentJobs, recentPlacements] = await Promise.all([
+  const today = todayISO();
+  const complianceWindow = daysFromNowISO(30);
+  const [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps] =
+    await Promise.all([
     client.from("candidates").select("id", { count: "exact", head: true }),
-    client.from("jobs").select("id", { count: "exact", head: true }).eq("status", "Active"),
-    client.from("placements").select("id", { count: "exact", head: true }),
-    client.from("candidates").select("id, first_name, last_name, created_at").order("created_at", { ascending: false }).limit(3),
-    client.from("jobs").select("id, company_name, job_title, created_at").order("created_at", { ascending: false }).limit(3),
-    client.from("placements").select("id, status, created_at").order("created_at", { ascending: false }).limit(3),
+    client.from("jobs").select("id", { count: "exact", head: true }).eq("status", "Open"),
+    client.from("placements").select("id", { count: "exact", head: true }).eq("status", "Active"),
+    client.from("candidates").select("*"),
+    client.from("candidates").select("*").order("created_at", { ascending: false }).limit(5),
+    client.from("jobs").select("*").order("created_at", { ascending: false }).limit(5),
+    client
+      .from("placements")
+      .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    client
+      .from("candidates")
+      .select("*")
+      .not("next_follow_up_date", "is", null)
+      .lte("next_follow_up_date", today)
+      .order("next_follow_up_date", { ascending: true })
+      .limit(5),
   ]);
 
-  for (const result of [candidates, activeJobs, placements, recentCandidates, recentJobs, recentPlacements]) {
+  for (const result of [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps]) {
     if (result.error) throw result.error;
   }
 
   const recentActivity = [
-    ...((recentCandidates.data ?? []) as Pick<Candidate, "id" | "first_name" | "last_name" | "created_at">[]).map((item) => ({
+    ...((recentCandidates.data ?? []) as Candidate[]).map((item) => ({
       id: item.id,
       type: "Candidate",
       title: `${item.first_name ?? ""} ${item.last_name ?? ""}`.trim() || "Unnamed candidate",
       created_at: item.created_at,
+      status: item.status,
     })),
-    ...((recentJobs.data ?? []) as Pick<Job, "id" | "company_name" | "job_title" | "created_at">[]).map((item) => ({
+    ...((recentJobs.data ?? []) as Job[]).map((item) => ({
       id: item.id,
       type: "Job",
       title: item.job_title || item.company_name || "Untitled job",
       created_at: item.created_at,
+      status: item.status,
     })),
-    ...((recentPlacements.data ?? []) as { id: string; status: string | null; created_at: string | null }[]).map((item) => ({
+    ...((recentPlacements.data ?? []) as PlacementWithRelations[]).map((item) => ({
       id: item.id,
       type: "Placement",
-      title: item.status || "New placement",
+      title: item.candidates
+        ? `${item.candidates.first_name ?? ""} ${item.candidates.last_name ?? ""}`.trim() || "Candidate placement"
+        : "New placement",
       created_at: item.created_at,
+      status: item.status,
     })),
   ]
     .sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime())
-    .slice(0, 5);
+    .slice(0, 8);
+
+  const candidateRows = (recentCandidates.data ?? []) as Candidate[];
+  const complianceRows = ((complianceCandidates.data ?? []) as Candidate[])
+    .filter(
+      (candidate) =>
+        ["Missing", "Pending", "Expiring Soon"].includes(candidate.compliance_status ?? "") ||
+        Boolean(candidate.compliance_expiry_date && candidate.compliance_expiry_date <= complianceWindow),
+    )
+    .sort((a, b) => {
+      if (!a.compliance_expiry_date) return 1;
+      if (!b.compliance_expiry_date) return -1;
+      return a.compliance_expiry_date.localeCompare(b.compliance_expiry_date);
+    });
+  const pipelineCounts = Object.fromEntries(candidateStatuses.map((status) => [status, 0])) as Record<CandidateStatus, number>;
+  for (const candidate of (complianceCandidates.data ?? []) as Candidate[]) {
+    const status = (candidate.status || "New") as CandidateStatus;
+    if (status in pipelineCounts) {
+      pipelineCounts[status] += 1;
+    }
+  }
 
   return {
     totalCandidates: candidates.count ?? 0,
-    activeJobs: activeJobs.count ?? 0,
-    placements: placements.count ?? 0,
+    openJobs: openJobs.count ?? 0,
+    activePlacements: activePlacements.count ?? 0,
+    complianceDueSoon: complianceRows.length,
     recentActivity,
+    pipelineCounts,
+    followUpsDue: (followUps.data ?? []) as Candidate[],
+    complianceWatch: complianceRows.slice(0, 5),
+    recentPlacements: (recentPlacements.data ?? []) as PlacementWithRelations[],
+    recentCandidates: candidateRows,
   };
 }

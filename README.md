@@ -10,7 +10,8 @@ A React, TypeScript, Tailwind CSS, and Supabase foundation for a recruitment and
 - Protected dashboard and account routes
 - Editable profile fields backed by a `profiles` table
 - Candidate, job, and placement management
-- Live dashboard metrics from Supabase
+- Operations dashboard with pipeline, follow-up, compliance, and placement widgets
+- Protected placeholder workspaces for compliance, follow-ups, and reports
 - Light and dark mode with persisted preference
 - Reusable layout and UI components
 
@@ -31,7 +32,8 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 Run the suggested schema in [supabase/schema.sql](./supabase/schema.sql), then run the MVP migration in
 [supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql](./supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql)
-inside the Supabase SQL editor.
+inside the Supabase SQL editor. For the workflow dashboard upgrade, also run
+[supabase/migrations/20260522233000_add_candidate_workflow_fields.sql](./supabase/migrations/20260522233000_add_candidate_workflow_fields.sql).
 
 ## Project structure
 
@@ -65,6 +67,9 @@ src/
 /jobs
 /jobs/:id
 /placements
+/compliance
+/follow-ups
+/reports
 /account
 ```
 

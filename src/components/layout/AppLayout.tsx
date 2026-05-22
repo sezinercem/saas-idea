@@ -1,6 +1,9 @@
 import {
   BriefcaseBusiness,
+  BarChart3,
   CalendarCheck,
+  CalendarClock,
+  FileCheck2,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -20,6 +23,9 @@ const sidebarItems = [
   { label: "Candidates", to: "/candidates", icon: UsersRound },
   { label: "Jobs", to: "/jobs", icon: BriefcaseBusiness },
   { label: "Placements", to: "/placements", icon: CalendarCheck },
+  { label: "Compliance", to: "/compliance", icon: FileCheck2 },
+  { label: "Follow-ups", to: "/follow-ups", icon: CalendarClock },
+  { label: "Reports", to: "/reports", icon: BarChart3 },
   { label: "Account", to: "/account", icon: Settings },
 ];
 

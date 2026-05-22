@@ -1,20 +1,63 @@
-import { Activity, BriefcaseBusiness, CalendarCheck, UsersRound } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { ButtonLink } from "../components/ui/Button";
+import {
+  Activity,
+  ArrowUpRight,
+  BriefcaseBusiness,
+  CalendarCheck,
+  Clock3,
+  FileCheck2,
+  FileUp,
+  Plus,
+  UsersRound,
+} from "lucide-react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Badge, type BadgeTone } from "../components/ui/Badge";
+import { Button, ButtonLink } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
-import { formatDate } from "../lib/format";
+import { formatDate, fullName } from "../lib/format";
 import { getDashboardMetrics } from "../lib/recruitment";
+import { statusTone } from "../lib/status";
+import { candidateStatuses } from "../lib/workflow";
+import type { CandidateStatus } from "../types/recruitment";
 
 type DashboardMetrics = Awaited<ReturnType<typeof getDashboardMetrics>>;
 
-const statConfig = [
-  { label: "Total Candidates", key: "totalCandidates", icon: UsersRound, href: "/candidates" },
-  { label: "Active Jobs", key: "activeJobs", icon: BriefcaseBusiness, href: "/jobs" },
-  { label: "Placements", key: "placements", icon: CalendarCheck, href: "/placements" },
+const summaryCards = [
+  {
+    label: "Total Candidates",
+    key: "totalCandidates",
+    support: "People in your active database",
+    icon: UsersRound,
+    href: "/candidates",
+    trend: "+0.0%",
+  },
+  {
+    label: "Open Jobs",
+    key: "openJobs",
+    support: "Roles available for matching",
+    icon: BriefcaseBusiness,
+    href: "/jobs",
+    trend: "+0.0%",
+  },
+  {
+    label: "Active Placements",
+    key: "activePlacements",
+    support: "Assignments currently live",
+    icon: CalendarCheck,
+    href: "/placements",
+    trend: "+0.0%",
+  },
+  {
+    label: "Compliance Due Soon",
+    key: "complianceDueSoon",
+    support: "Missing or expiring checks",
+    icon: FileCheck2,
+    href: "/compliance",
+    trend: "Watch",
+  },
 ] as const;
 
 export function DashboardPage() {
@@ -45,62 +88,235 @@ export function DashboardPage() {
     <div className="mx-auto max-w-7xl">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Dashboard</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Welcome back, {displayName}</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">A live view of your recruitment workflow foundation.</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Operations Command Centre</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Good to see you, {displayName}</h1>
+          <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-300">
+            Monitor recruitment activity, follow-ups, compliance risk, and live placements from one workspace.
+          </p>
         </div>
-        <ButtonLink to="/candidates">Add candidate</ButtonLink>
+        <ButtonLink to="/candidates">
+          <Plus className="size-4" />
+          Add candidate
+        </ButtonLink>
       </div>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-3">
-        {statConfig.map((stat) => (
-          <Card key={stat.key}>
-            <div className="flex items-center justify-between gap-4">
+      <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {summaryCards.map((card) => (
+          <Card key={card.key} className="p-5">
+            <div className="flex items-start justify-between gap-4">
               <span className="flex size-11 items-center justify-center rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100">
-                <stat.icon className="size-5" />
+                <card.icon className="size-5" />
               </span>
-              <ButtonLink to={stat.href} variant="ghost" className="h-9 px-3">
-                View
+              <Badge tone={card.trend === "Watch" ? "amber" : "green"}>{card.trend}</Badge>
+            </div>
+            <p className="mt-5 text-sm font-medium text-slate-500 dark:text-slate-400">{card.label}</p>
+            {isLoading ? (
+              <Skeleton className="mt-3 h-9 w-20" />
+            ) : (
+              <p className="mt-2 text-3xl font-bold">{metrics?.[card.key] ?? 0}</p>
+            )}
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{card.support}</p>
+              <ButtonLink to={card.href} variant="ghost" className="h-8 px-2">
+                <ArrowUpRight className="size-4" />
               </ButtonLink>
             </div>
-            <p className="mt-5 text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
-            {isLoading ? <Skeleton className="mt-3 h-9 w-20" /> : <p className="mt-2 text-3xl font-bold">{metrics?.[stat.key] ?? 0}</p>}
           </Card>
         ))}
-      </div>
+      </section>
+
+      <section className="mt-8 grid gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-8">
+          <DashboardPanel title="Today's Recruitment Activity" icon={<Activity className="size-5" />}>
+            {isLoading ? (
+              <LoadingRows />
+            ) : metrics?.recentActivity.length ? (
+              <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                {metrics.recentActivity.map((activity) => (
+                  <div key={`${activity.type}-${activity.id}`} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <Badge tone={activity.type === "Candidate" ? "blue" : activity.type === "Job" ? "green" : "amber"}>
+                        {activity.type}
+                      </Badge>
+                      <div>
+                        <p className="font-semibold">{activity.title}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{activity.status || "Workflow activity"}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{formatDate(activity.created_at)}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={Activity} title="No activity yet" body="Add candidates, jobs, or placements and recent work will appear here." />
+            )}
+          </DashboardPanel>
+
+          <DashboardPanel title="Pipeline Overview" icon={<UsersRound className="size-5" />}>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {candidateStatuses.map((status) => (
+                <div key={status} className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge tone={pipelineTone(status)}>{status}</Badge>
+                    <span className="text-xl font-bold">{isLoading ? "..." : metrics?.pipelineCounts[status] ?? 0}</span>
+                  </div>
+                  <div className="mt-4 h-2 rounded-full bg-slate-100 dark:bg-slate-800">
+                    <div
+                      className="h-2 rounded-full bg-brand-600 dark:bg-brand-100"
+                      style={{ width: `${pipelineWidth(metrics?.pipelineCounts[status] ?? 0, metrics?.totalCandidates ?? 0)}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">Candidate stage count</p>
+                </div>
+              ))}
+            </div>
+          </DashboardPanel>
+        </div>
+
+        <div className="space-y-6 xl:col-span-4">
+          <DashboardPanel title="Quick Actions" icon={<Plus className="size-5" />}>
+            <div className="grid gap-3">
+              <ButtonLink to="/candidates" variant="outline" className="justify-start">
+                <UsersRound className="size-4" />
+                Add Candidate
+              </ButtonLink>
+              <ButtonLink to="/jobs" variant="outline" className="justify-start">
+                <BriefcaseBusiness className="size-4" />
+                Add Job
+              </ButtonLink>
+              <ButtonLink to="/placements" variant="outline" className="justify-start">
+                <CalendarCheck className="size-4" />
+                Create Placement
+              </ButtonLink>
+              <Button variant="outline" className="justify-start" onClick={() => notify("Compliance uploads are coming soon.", "info")}>
+                <FileUp className="size-4" />
+                Upload Compliance Document
+              </Button>
+            </div>
+          </DashboardPanel>
+
+          <DashboardPanel title="Follow-ups Due" icon={<Clock3 className="size-5" />}>
+            {isLoading ? (
+              <LoadingRows />
+            ) : metrics?.followUpsDue.length ? (
+              <div className="space-y-3">
+                {metrics.followUpsDue.map((candidate) => (
+                  <MiniRecord
+                    key={candidate.id}
+                    title={fullName(candidate.first_name, candidate.last_name)}
+                    meta={candidate.follow_up_reason || "Follow up"}
+                    extra={formatDate(candidate.next_follow_up_date)}
+                    tone="amber"
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={Clock3} title="No follow-ups due" body="Overdue and due-today candidate follow-ups will appear here." />
+            )}
+          </DashboardPanel>
+
+          <DashboardPanel title="Compliance Watch" icon={<FileCheck2 className="size-5" />}>
+            {isLoading ? (
+              <LoadingRows />
+            ) : metrics?.complianceWatch.length ? (
+              <div className="space-y-3">
+                {metrics.complianceWatch.map((candidate) => (
+                  <MiniRecord
+                    key={candidate.id}
+                    title={fullName(candidate.first_name, candidate.last_name)}
+                    meta={`Expiry ${formatDate(candidate.compliance_expiry_date)}`}
+                    extra={candidate.compliance_status || "Missing"}
+                    tone={statusTone(candidate.compliance_status)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={FileCheck2} title="Compliance clear" body="Missing and expiring candidate checks will appear here." />
+            )}
+          </DashboardPanel>
+        </div>
+      </section>
 
       <section className="mt-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Activity className="size-5 text-brand-600 dark:text-brand-100" />
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
-        </div>
-        {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
-        ) : metrics?.recentActivity.length ? (
-          <Card className="divide-y divide-slate-200 p-0 dark:divide-slate-800">
-            {metrics.recentActivity.map((activity) => (
-              <div key={`${activity.type}-${activity.id}`} className="flex flex-col gap-1 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-semibold">{activity.title}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{activity.type}</p>
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{formatDate(activity.created_at)}</p>
+        <DashboardPanel title="Recent Placements" icon={<CalendarCheck className="size-5" />}>
+          {isLoading ? (
+            <LoadingRows />
+          ) : metrics?.recentPlacements.length ? (
+            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+              <div className="hidden grid-cols-[1.2fr_1fr_1fr_120px_120px] gap-4 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400 md:grid">
+                <span>Candidate</span>
+                <span>Job</span>
+                <span>Company</span>
+                <span>Start date</span>
+                <span>Status</span>
               </div>
-            ))}
-          </Card>
-        ) : (
-          <EmptyState
-            icon={Activity}
-            title="No recent activity"
-            body="Add candidates, jobs, or placements and this dashboard will start showing live operational activity."
-            action={<ButtonLink to="/candidates">Add candidate</ButtonLink>}
-          />
-        )}
+              <div className="divide-y divide-slate-200 dark:divide-slate-800">
+                {metrics.recentPlacements.map((placement) => (
+                  <div key={placement.id} className="grid gap-2 px-4 py-4 md:grid-cols-[1.2fr_1fr_1fr_120px_120px] md:gap-4">
+                    <span className="font-semibold">
+                      {placement.candidates ? fullName(placement.candidates.first_name, placement.candidates.last_name) : "Unassigned"}
+                    </span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{placement.jobs?.job_title || "Untitled role"}</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{placement.jobs?.company_name || "No company"}</span>
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{formatDate(placement.start_date)}</span>
+                    <Badge tone={statusTone(placement.status)}>{placement.status || "Pending"}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <EmptyState icon={CalendarCheck} title="No placements yet" body="Recent placements will appear here once candidates are matched to jobs." />
+          )}
+        </DashboardPanel>
       </section>
     </div>
   );
+}
+
+function DashboardPanel({ children, icon, title }: { children: ReactNode; icon: ReactNode; title: string }) {
+  return (
+    <Card>
+      <div className="mb-5 flex items-center gap-2 text-slate-950 dark:text-white">
+        <span className="text-brand-600 dark:text-brand-100">{icon}</span>
+        <h2 className="text-lg font-semibold">{title}</h2>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function LoadingRows() {
+  return (
+    <div className="space-y-3">
+      <Skeleton className="h-14 w-full" />
+      <Skeleton className="h-14 w-full" />
+      <Skeleton className="h-14 w-full" />
+    </div>
+  );
+}
+
+function MiniRecord({ extra, meta, title, tone }: { extra: string; meta: string; title: string; tone: BadgeTone }) {
+  return (
+    <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{meta}</p>
+        </div>
+        <Badge tone={tone}>{extra}</Badge>
+      </div>
+    </div>
+  );
+}
+
+function pipelineTone(status: CandidateStatus): BadgeTone {
+  if (status === "Placed") return "green";
+  if (status === "Interviewing") return "amber";
+  if (status === "Archived") return "slate";
+  return "blue";
+}
+
+function pipelineWidth(count: number, total: number) {
+  if (!total) return 0;
+  return Math.max(8, Math.round((count / total) * 100));
 }
