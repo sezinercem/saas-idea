@@ -1,4 +1,13 @@
-import { LayoutDashboard, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CalendarCheck,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  ShieldCheck,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
@@ -8,6 +17,9 @@ import { Logo } from "./Logo";
 
 const sidebarItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+  { label: "Candidates", to: "/candidates", icon: UsersRound },
+  { label: "Jobs", to: "/jobs", icon: BriefcaseBusiness },
+  { label: "Placements", to: "/placements", icon: CalendarCheck },
   { label: "Account", to: "/account", icon: Settings },
 ];
 
@@ -62,7 +74,7 @@ export function AppLayout() {
             </div>
             <div className="hidden items-center gap-2 text-sm text-slate-500 lg:flex dark:text-slate-400">
               <ShieldCheck className="size-4 text-emerald-500" />
-              Auth foundation active
+              Workforce operations active
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />

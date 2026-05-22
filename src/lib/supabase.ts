@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Profile } from "../types/profile";
+import type { Candidate, Job, Placement } from "../types/recruitment";
 
 type Database = {
   public: {
@@ -12,6 +13,48 @@ type Database = {
         };
         Update: Partial<Omit<Profile, "id" | "email" | "created_at">>;
         Relationships: [];
+      };
+      candidates: {
+        Row: Candidate;
+        Insert: Omit<Candidate, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string | null;
+        };
+        Update: Partial<Omit<Candidate, "id" | "created_by" | "created_at">>;
+        Relationships: [];
+      };
+      jobs: {
+        Row: Job;
+        Insert: Omit<Job, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string | null;
+        };
+        Update: Partial<Omit<Job, "id" | "created_by" | "created_at">>;
+        Relationships: [];
+      };
+      placements: {
+        Row: Placement;
+        Insert: Omit<Placement, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string | null;
+        };
+        Update: Partial<Omit<Placement, "id" | "created_by" | "created_at">>;
+        Relationships: [
+          {
+            foreignKeyName: "placements_candidate_id_fkey";
+            columns: ["candidate_id"];
+            isOneToOne: false;
+            referencedRelation: "candidates";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "placements_job_id_fkey";
+            columns: ["job_id"];
+            isOneToOne: false;
+            referencedRelation: "jobs";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: Record<string, never>;

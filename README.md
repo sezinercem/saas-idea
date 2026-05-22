@@ -9,6 +9,8 @@ A React, TypeScript, Tailwind CSS, and Supabase foundation for a recruitment and
 - Persistent auth session handling
 - Protected dashboard and account routes
 - Editable profile fields backed by a `profiles` table
+- Candidate, job, and placement management
+- Live dashboard metrics from Supabase
 - Light and dark mode with persisted preference
 - Reusable layout and UI components
 
@@ -27,7 +29,9 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-Run the suggested schema in [supabase/schema.sql](./supabase/schema.sql) inside the Supabase SQL editor.
+Run the suggested schema in [supabase/schema.sql](./supabase/schema.sql), then run the MVP migration in
+[supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql](./supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql)
+inside the Supabase SQL editor.
 
 ## Project structure
 
@@ -36,11 +40,32 @@ src/
   components/
     layout/      App shell, nav, protected routes
     ui/          Reusable buttons, cards, inputs, alerts
+    forms/       Reusable form controls
+    feedback/    Toast notifications
   context/       Auth and theme providers
+  features/
+    candidates/  Candidate list, detail, forms
+    jobs/        Job list, detail, forms
+    placements/  Placement list and creation form
   hooks/         Shared app hooks
   lib/           Supabase client and utilities
   pages/         Route-level pages
   types/         Shared TypeScript types
+```
+
+## App routes
+
+```text
+/
+/login
+/signup
+/dashboard
+/candidates
+/candidates/:id
+/jobs
+/jobs/:id
+/placements
+/account
 ```
 
 ## Scripts
