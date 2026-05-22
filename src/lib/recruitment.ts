@@ -9,7 +9,8 @@ import type {
   PlacementInput,
   PlacementWithRelations,
 } from "../types/recruitment";
-import { candidateStatuses, daysFromNowISO, todayISO } from "./workflow";
+import { candidateStatuses, daysFromNowISO, jobStatuses, todayISO } from "./workflow";
+import { candidateSchema, jobSchema } from "./validation";
 
 function getClient() {
   if (!supabase) {
@@ -20,11 +21,16 @@ function getClient() {
 }
 
 function cleanCandidateInput(input: CandidateInput) {
+  const parsed = candidateSchema.parse(input);
   return {
-    ...input,
-    next_follow_up_date: input.next_follow_up_date || null,
-    compliance_expiry_date: input.compliance_expiry_date || null,
+    ...parsed,
+    next_follow_up_date: parsed.next_follow_up_date || null,
+    compliance_expiry_date: parsed.compliance_expiry_date || null,
   };
+}
+
+function cleanJobInput(input: JobInput) {
+  return jobSchema.parse(input);
 }
 
 export async function listCandidates(search = "") {
@@ -46,25 +52,50 @@ export async function getCandidate(id: string) {
   return data;
 }
 
-export async function createCandidate(createdBy: string, input: CandidateInput) {
+export async function createActivityLog(
+  agencyId: string | null | undefined,
+  userId: string | null | undefined,
+  entityType: string,
+  entityId: string | null,
+  action: string,
+  metadata: Record<string, unknown> = {},
+) {
+  if (!agencyId) return;
+  const { error } = await getClient().from("activity_logs").insert({
+    agency_id: agencyId,
+    user_id: userId ?? null,
+    entity_type: entityType,
+    entity_id: entityId,
+    action,
+    metadata,
+  });
+  if (error) throw error;
+}
+
+export async function createCandidate(createdBy: string, input: CandidateInput, agencyId?: string | null) {
   const { data, error } = await getClient()
     .from("candidates")
-    .insert({ ...cleanCandidateInput(input), created_by: createdBy })
+    .insert({ ...cleanCandidateInput(input), created_by: createdBy, agency_id: agencyId ?? null })
     .select()
     .single();
   if (error) throw error;
+  await createActivityLog(agencyId, createdBy, "candidate", data.id, "candidate.created", {
+    name: `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim(),
+  });
   return data;
 }
 
-export async function updateCandidate(id: string, input: CandidateInput) {
+export async function updateCandidate(id: string, input: CandidateInput, agencyId?: string | null, userId?: string | null) {
   const { data, error } = await getClient().from("candidates").update(cleanCandidateInput(input)).eq("id", id).select().single();
   if (error) throw error;
+  await createActivityLog(agencyId, userId, "candidate", id, "candidate.updated", { status: input.status });
   return data;
 }
 
-export async function updateCandidateStatus(id: string, status: CandidateStatus) {
+export async function updateCandidateStatus(id: string, status: CandidateStatus, agencyId?: string | null, userId?: string | null) {
   const { data, error } = await getClient().from("candidates").update({ status }).eq("id", id).select().single();
   if (error) throw error;
+  await createActivityLog(agencyId, userId, "candidate", id, "candidate.status_changed", { status });
   return data;
 }
 
@@ -92,21 +123,27 @@ export async function getJob(id: string) {
   return data;
 }
 
-export async function createJob(createdBy: string, input: JobInput) {
-  const { data, error } = await getClient().from("jobs").insert({ ...input, created_by: createdBy }).select().single();
+export async function createJob(createdBy: string, input: JobInput, agencyId?: string | null) {
+  const { data, error } = await getClient()
+    .from("jobs")
+    .insert({ ...cleanJobInput(input), created_by: createdBy, agency_id: agencyId ?? null })
+    .select()
+    .single();
   if (error) throw error;
+  await createActivityLog(agencyId, createdBy, "job", data.id, "job.created", { title: data.job_title });
   return data;
 }
 
 export async function updateJob(id: string, input: JobInput) {
-  const { data, error } = await getClient().from("jobs").update(input).eq("id", id).select().single();
+  const { data, error } = await getClient().from("jobs").update(cleanJobInput(input)).eq("id", id).select().single();
   if (error) throw error;
   return data;
 }
 
-export async function updateJobStatus(id: string, status: JobStatus) {
+export async function updateJobStatus(id: string, status: JobStatus, agencyId?: string | null, userId?: string | null) {
   const { data, error } = await getClient().from("jobs").update({ status }).eq("id", id).select().single();
   if (error) throw error;
+  await createActivityLog(agencyId, userId, "job", id, "job.status_changed", { status });
   return data;
 }
 
@@ -158,14 +195,15 @@ export async function listJobPlacements(jobId: string) {
   return (data ?? []) as PlacementWithRelations[];
 }
 
-export async function createPlacement(createdBy: string, input: PlacementInput) {
+export async function createPlacement(createdBy: string, input: PlacementInput, agencyId?: string | null) {
   const { data, error } = await getClient()
     .from("placements")
-    .insert({ ...input, created_by: createdBy })
+    .insert({ ...input, created_by: createdBy, agency_id: agencyId ?? null })
     .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
     .single();
 
   if (error) throw error;
+  await createActivityLog(agencyId, createdBy, "placement", data.id, "placement.created", { status: data.status });
   return data as PlacementWithRelations;
 }
 
@@ -178,7 +216,7 @@ export async function getDashboardMetrics() {
   const client = getClient();
   const today = todayISO();
   const complianceWindow = daysFromNowISO(30);
-  const [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps] =
+  const [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps, activityLogs, allJobs] =
     await Promise.all([
     client.from("candidates").select("id", { count: "exact", head: true }),
     client.from("jobs").select("id", { count: "exact", head: true }).eq("status", "Open"),
@@ -198,9 +236,11 @@ export async function getDashboardMetrics() {
       .lte("next_follow_up_date", today)
       .order("next_follow_up_date", { ascending: true })
       .limit(5),
+    client.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(8),
+    client.from("jobs").select("*"),
   ]);
 
-  for (const result of [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps]) {
+  for (const result of [candidates, openJobs, activePlacements, complianceCandidates, recentCandidates, recentJobs, recentPlacements, followUps, activityLogs, allJobs]) {
     if (result.error) throw result.error;
   }
 
@@ -251,6 +291,13 @@ export async function getDashboardMetrics() {
       pipelineCounts[status] += 1;
     }
   }
+  const jobsByStatus = Object.fromEntries(jobStatuses.map((status) => [status, 0])) as Record<JobStatus, number>;
+  for (const job of (allJobs.data ?? []) as Job[]) {
+    const status = (job.status || "Open") as JobStatus;
+    if (status in jobsByStatus) {
+      jobsByStatus[status] += 1;
+    }
+  }
 
   return {
     totalCandidates: candidates.count ?? 0,
@@ -263,5 +310,12 @@ export async function getDashboardMetrics() {
     complianceWatch: complianceRows.slice(0, 5),
     recentPlacements: (recentPlacements.data ?? []) as PlacementWithRelations[],
     recentCandidates: candidateRows,
+    activityLogs: activityLogs.data ?? [],
+    jobsByStatus,
+    placementsThisMonth: ((recentPlacements.data ?? []) as PlacementWithRelations[]).filter((placement) => {
+      const created = placement.created_at ? new Date(placement.created_at) : null;
+      const now = new Date();
+      return Boolean(created && created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear());
+    }).length,
   };
 }

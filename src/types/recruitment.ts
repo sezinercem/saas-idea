@@ -1,5 +1,6 @@
 export type Candidate = {
   id: string;
+  agency_id: string | null;
   created_by: string;
   first_name: string | null;
   last_name: string | null;
@@ -17,6 +18,7 @@ export type Candidate = {
 
 export type Job = {
   id: string;
+  agency_id: string | null;
   created_by: string;
   company_name: string | null;
   job_title: string | null;
@@ -29,6 +31,7 @@ export type Job = {
 
 export type Placement = {
   id: string;
+  agency_id: string | null;
   created_by: string;
   candidate_id: string | null;
   job_id: string | null;

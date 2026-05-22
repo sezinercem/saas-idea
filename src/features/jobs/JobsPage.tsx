@@ -11,6 +11,7 @@ import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
 import { TableSkeleton } from "../../components/ui/Skeleton";
 import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
 import { formatDate } from "../../lib/format";
 import { createJob, deleteJob, listJobs, updateJob } from "../../lib/recruitment";
@@ -18,6 +19,7 @@ import type { Job, JobInput } from "../../types/recruitment";
 
 export function JobsPage() {
   const { user } = useAuth();
+  const { agency } = useAgency();
   const { notify } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [search, setSearch] = useState("");
@@ -59,7 +61,7 @@ export function JobsPage() {
       await updateJob(selectedJob.id, input);
       notify("Job updated.", "success");
     } else {
-      await createJob(user.id, input);
+      await createJob(user.id, input, agency?.id);
       notify("Job added.", "success");
     }
 

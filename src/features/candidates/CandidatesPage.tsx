@@ -11,6 +11,7 @@ import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
 import { TableSkeleton } from "../../components/ui/Skeleton";
 import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
 import { fullName, formatDate } from "../../lib/format";
 import { createCandidate, deleteCandidate, listCandidates, updateCandidate } from "../../lib/recruitment";
@@ -18,6 +19,7 @@ import type { Candidate, CandidateInput } from "../../types/recruitment";
 
 export function CandidatesPage() {
   const { user } = useAuth();
+  const { agency } = useAgency();
   const { notify } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [search, setSearch] = useState("");
@@ -56,10 +58,10 @@ export function CandidatesPage() {
     if (!user) return;
 
     if (selectedCandidate) {
-      await updateCandidate(selectedCandidate.id, input);
+      await updateCandidate(selectedCandidate.id, input, agency?.id, user.id);
       notify("Candidate updated.", "success");
     } else {
-      await createCandidate(user.id, input);
+      await createCandidate(user.id, input, agency?.id);
       notify("Candidate added.", "success");
     }
 

@@ -9,6 +9,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { Modal } from "../../components/ui/Modal";
 import { TableSkeleton } from "../../components/ui/Skeleton";
 import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, fullName } from "../../lib/format";
 import { createPlacement, deletePlacement, listCandidates, listJobs, listPlacements } from "../../lib/recruitment";
@@ -16,6 +17,7 @@ import type { Candidate, Job, PlacementInput, PlacementWithRelations } from "../
 
 export function PlacementsPage() {
   const { user } = useAuth();
+  const { agency } = useAgency();
   const { notify } = useToast();
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -46,7 +48,7 @@ export function PlacementsPage() {
   const handleSubmit = async (input: PlacementInput) => {
     if (!user) return;
 
-    await createPlacement(user.id, input);
+    await createPlacement(user.id, input, agency?.id);
     notify("Placement created.", "success");
     setIsModalOpen(false);
     await loadPlacements();

@@ -2,6 +2,8 @@ import { ArrowLeft, CalendarClock, FileCheck2, Mail, Phone, UserRound } from "lu
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
+import { DocumentsPanel } from "../documents/DocumentsPanel";
+import { NotesPanel } from "../notes/NotesPanel";
 import { Select } from "../../components/forms/Select";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -10,6 +12,8 @@ import { Card } from "../../components/ui/Card";
 import { Modal } from "../../components/ui/Modal";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
@@ -19,6 +23,8 @@ import type { Candidate, CandidateInput, CandidateStatus, PlacementWithRelations
 export function CandidateDetailPage() {
   const { id } = useParams();
   const { notify } = useToast();
+  const { user } = useAuth();
+  const { agency } = useAgency();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -48,7 +54,7 @@ export function CandidateDetailPage() {
   const handleStatusChange = async (status: CandidateStatus) => {
     if (!candidate) return;
 
-    const updated = await updateCandidateStatus(candidate.id, status);
+    const updated = await updateCandidateStatus(candidate.id, status, agency?.id, user?.id);
     setCandidate(updated);
     notify("Candidate status updated.", "success");
   };
@@ -56,7 +62,7 @@ export function CandidateDetailPage() {
   const handleEdit = async (input: CandidateInput) => {
     if (!candidate) return;
 
-    await updateCandidate(candidate.id, input);
+    await updateCandidate(candidate.id, input, agency?.id, user?.id);
     notify("Candidate updated.", "success");
     setIsEditOpen(false);
     await loadCandidate();
@@ -181,6 +187,14 @@ export function CandidateDetailPage() {
             <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No placements linked yet.</p>
           )}
         </Card>
+
+        <div className="space-y-6 lg:col-span-6">
+          <NotesPanel entityType="candidate" entityId={candidate.id} />
+        </div>
+
+        <div className="space-y-6 lg:col-span-6">
+          <DocumentsPanel entityType="candidate" entityId={candidate.id} />
+        </div>
       </div>
 
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit candidate" size="lg">

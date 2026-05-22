@@ -11,11 +11,13 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import { CommandPalette } from "./CommandPalette";
 import { Logo } from "./Logo";
 
 const sidebarItems = [
@@ -26,12 +28,14 @@ const sidebarItems = [
   { label: "Compliance", to: "/compliance", icon: FileCheck2 },
   { label: "Follow-ups", to: "/follow-ups", icon: CalendarClock },
   { label: "Reports", to: "/reports", icon: BarChart3 },
+  { label: "Team", to: "/team", icon: UsersRound },
   { label: "Account", to: "/account", icon: Settings },
 ];
 
 export function AppLayout() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -83,6 +87,10 @@ export function AppLayout() {
               Workforce operations active
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" className="hidden h-10 px-3 md:inline-flex" onClick={() => setIsSearchOpen(true)}>
+                <span className="text-slate-500">Search</span>
+                <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs dark:bg-slate-800">⌘K</kbd>
+              </Button>
               <ThemeToggle />
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="size-4" />
@@ -112,6 +120,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette isOpen={isSearchOpen} setIsOpen={setIsSearchOpen} />
     </div>
   );
 }

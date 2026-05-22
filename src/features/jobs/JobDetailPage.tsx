@@ -2,11 +2,14 @@ import { ArrowLeft, BriefcaseBusiness, Building2, MapPin, WalletCards } from "lu
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Select } from "../../components/forms/Select";
+import { NotesPanel } from "../notes/NotesPanel";
 import { Badge } from "../../components/ui/Badge";
 import { ButtonLink } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../hooks/useToast";
+import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getJob, listJobPlacements, updateJobStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
@@ -16,6 +19,8 @@ import type { Job, JobStatus, PlacementWithRelations } from "../../types/recruit
 export function JobDetailPage() {
   const { id } = useParams();
   const { notify } = useToast();
+  const { user } = useAuth();
+  const { agency } = useAgency();
   const [job, setJob] = useState<Job | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,7 +49,7 @@ export function JobDetailPage() {
   const handleStatusChange = async (status: JobStatus) => {
     if (!job) return;
 
-    const updated = await updateJobStatus(job.id, status);
+    const updated = await updateJobStatus(job.id, status, agency?.id, user?.id);
     setJob(updated);
     notify("Job status updated.", "success");
   };
@@ -137,6 +142,10 @@ export function JobDetailPage() {
             <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No placements linked yet.</p>
           )}
         </Card>
+
+        <div className="lg:col-span-12">
+          <NotesPanel entityType="job" entityId={job.id} />
+        </div>
       </div>
     </div>
   );

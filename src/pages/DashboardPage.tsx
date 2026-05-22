@@ -17,10 +17,11 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../hooks/useToast";
+import { BarList } from "../features/dashboard/BarList";
 import { formatDate, fullName } from "../lib/format";
 import { getDashboardMetrics } from "../lib/recruitment";
 import { statusTone } from "../lib/status";
-import { candidateStatuses } from "../lib/workflow";
+import { candidateStatuses, jobStatuses } from "../lib/workflow";
 import type { CandidateStatus } from "../types/recruitment";
 
 type DashboardMetrics = Awaited<ReturnType<typeof getDashboardMetrics>>;
@@ -171,6 +172,22 @@ export function DashboardPage() {
               ))}
             </div>
           </DashboardPanel>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <DashboardPanel title="Jobs by Status" icon={<BriefcaseBusiness className="size-5" />}>
+              <BarList data={jobStatuses.map((status) => ({ label: status, value: metrics?.jobsByStatus[status] ?? 0 }))} />
+            </DashboardPanel>
+            <DashboardPanel title="Hiring Velocity" icon={<ArrowUpRight className="size-5" />}>
+              <BarList
+                data={[
+                  { label: "Sourced", value: metrics?.totalCandidates ?? 0 },
+                  { label: "Interviewing", value: metrics?.pipelineCounts.Interviewing ?? 0 },
+                  { label: "Placed", value: metrics?.pipelineCounts.Placed ?? 0 },
+                ]}
+              />
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Placeholder velocity chart using current pipeline counts.</p>
+            </DashboardPanel>
+          </div>
         </div>
 
         <div className="space-y-6 xl:col-span-4">
@@ -232,6 +249,20 @@ export function DashboardPage() {
               </div>
             ) : (
               <EmptyState icon={FileCheck2} title="Compliance clear" body="Missing and expiring candidate checks will appear here." />
+            )}
+          </DashboardPanel>
+
+          <DashboardPanel title="Recruiter Activity Feed" icon={<Activity className="size-5" />}>
+            {isLoading ? (
+              <LoadingRows />
+            ) : metrics?.activityLogs.length ? (
+              <div className="space-y-3">
+                {metrics.activityLogs.map((log) => (
+                  <MiniRecord key={log.id} title={log.action.replaceAll(".", " ")} meta={log.entity_type} extra={formatDate(log.created_at)} tone="blue" />
+                ))}
+              </div>
+            ) : (
+              <EmptyState icon={Activity} title="No activity logs yet" body="Tracked create and status-change events will show here." />
             )}
           </DashboardPanel>
         </div>

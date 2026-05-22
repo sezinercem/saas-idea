@@ -12,6 +12,9 @@ A React, TypeScript, Tailwind CSS, and Supabase foundation for a recruitment and
 - Candidate, job, and placement management
 - Operations dashboard with pipeline, follow-up, compliance, and placement widgets
 - Protected placeholder workspaces for compliance, follow-ups, and reports
+- Multi-tenant agency and team architecture
+- Activity logs, reusable notes, and document upload foundation
+- Command palette search with Cmd/Ctrl+K
 - Light and dark mode with persisted preference
 - Reusable layout and UI components
 
@@ -34,6 +37,8 @@ Run the suggested schema in [supabase/schema.sql](./supabase/schema.sql), then r
 [supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql](./supabase/migrations/20260522220000_create_recruitment_mvp_tables.sql)
 inside the Supabase SQL editor. For the workflow dashboard upgrade, also run
 [supabase/migrations/20260522233000_add_candidate_workflow_fields.sql](./supabase/migrations/20260522233000_add_candidate_workflow_fields.sql).
+For the production architecture upgrade, run
+[supabase/migrations/20260523003000_multi_tenant_recruitment_architecture.sql](./supabase/migrations/20260523003000_multi_tenant_recruitment_architecture.sql).
 
 ## Project structure
 
@@ -46,9 +51,17 @@ src/
     feedback/    Toast notifications
   context/       Auth and theme providers
   features/
+    auth/        Agency onboarding flow
     candidates/  Candidate list, detail, forms
+    compliance/  Compliance foundations
+    dashboard/   Dashboard widgets/charts
+    documents/   Supabase Storage document panels
+    followups/   Follow-up workspace placeholder
     jobs/        Job list, detail, forms
+    notes/       Reusable entity notes
     placements/  Placement list and creation form
+    reports/     Reporting workspace placeholder
+    team/        Team management
   hooks/         Shared app hooks
   lib/           Supabase client and utilities
   pages/         Route-level pages
@@ -61,6 +74,7 @@ src/
 /
 /login
 /signup
+/onboarding
 /dashboard
 /candidates
 /candidates/:id
@@ -70,7 +84,16 @@ src/
 /compliance
 /follow-ups
 /reports
+/team
 /account
+```
+
+## Supabase Storage
+
+Create/use the private bucket named `recruitment-documents`. The multi-tenant migration creates the bucket and storage policies when permissions allow it. Uploaded files are stored under:
+
+```text
+{agency_id}/{entity_type}/{entity_id}/{file}
 ```
 
 ## Scripts
