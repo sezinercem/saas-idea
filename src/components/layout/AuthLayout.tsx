@@ -21,13 +21,13 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_480px]">
           <section className="hidden max-w-xl lg:block">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-100">
-              Workforce command center
+              Education compliance command centre
             </p>
             <h1 className="text-4xl font-bold tracking-tight text-slate-950 dark:text-white">
-              Keep candidates, placements, bookings, and compliance moving together.
+              Clear candidates for school placements with confidence.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-600 dark:text-slate-300">
-              A focused foundation for staffing teams that need clean workflows before the CRM gets heavy.
+              Bring DBS, safeguarding, Right to Work and school placement readiness into one secure workspace.
             </p>
           </section>
           {children}

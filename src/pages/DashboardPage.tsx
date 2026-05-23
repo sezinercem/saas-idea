@@ -11,20 +11,23 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Badge, type BadgeTone } from "../components/ui/Badge";
-import { Button, ButtonLink } from "../components/ui/Button";
+import { ButtonLink } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useAuth } from "../hooks/useAuth";
+import { useAgency } from "../hooks/useAgency";
 import { useToast } from "../hooks/useToast";
 import { BarList } from "../features/dashboard/BarList";
 import { formatDate, fullName } from "../lib/format";
+import { getComplianceDashboard } from "../lib/compliance";
 import { getDashboardMetrics } from "../lib/recruitment";
 import { statusTone } from "../lib/status";
 import { candidateStatuses, jobStatuses } from "../lib/workflow";
 import type { CandidateStatus } from "../types/recruitment";
 
 type DashboardMetrics = Awaited<ReturnType<typeof getDashboardMetrics>>;
+type ClearanceDashboard = Awaited<ReturnType<typeof getComplianceDashboard>>;
 
 const summaryCards = [
   {
@@ -52,9 +55,9 @@ const summaryCards = [
     trend: "+0.0%",
   },
   {
-    label: "Compliance Due Soon",
+    label: "Clearance Risks",
     key: "complianceDueSoon",
-    support: "Missing or expiring checks",
+    support: "DBS, safeguarding or RTW risks",
     icon: FileCheck2,
     href: "/compliance",
     trend: "Watch",
@@ -63,21 +66,28 @@ const summaryCards = [
 
 export function DashboardPage() {
   const { user, profile } = useAuth();
+  const { agency } = useAgency();
   const { notify } = useToast();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [clearance, setClearance] = useState<ClearanceDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const displayName = profile?.full_name || user?.email;
 
   const loadMetrics = useCallback(async () => {
     setIsLoading(true);
     try {
-      setMetrics(await getDashboardMetrics());
+      const [metricData, clearanceData] = await Promise.all([
+        getDashboardMetrics(),
+        agency ? getComplianceDashboard(agency.id) : Promise.resolve(null),
+      ]);
+      setMetrics(metricData);
+      setClearance(clearanceData);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load dashboard.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [notify]);
+  }, [agency, notify]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -92,7 +102,7 @@ export function DashboardPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Operations Command Centre</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Good to see you, {displayName}</h1>
           <p className="mt-3 max-w-2xl text-slate-600 dark:text-slate-300">
-            Monitor recruitment activity, follow-ups, compliance risk, and live placements from one workspace.
+            Monitor education recruitment activity, safer recruitment risk, and school placements from one workspace.
           </p>
         </div>
         <ButtonLink to="/candidates">
@@ -114,7 +124,9 @@ export function DashboardPage() {
             {isLoading ? (
               <Skeleton className="mt-3 h-9 w-20" />
             ) : (
-              <p className="mt-2 text-3xl font-bold">{metrics?.[card.key] ?? 0}</p>
+              <p className="mt-2 text-3xl font-bold">
+                {card.key === "complianceDueSoon" ? clearance?.nonCompliant ?? 0 : metrics?.[card.key] ?? 0}
+              </p>
             )}
             <div className="mt-4 flex items-center justify-between gap-3">
               <p className="text-xs text-slate-500 dark:text-slate-400">{card.support}</p>
@@ -205,10 +217,10 @@ export function DashboardPage() {
                 <CalendarCheck className="size-4" />
                 Create Placement
               </ButtonLink>
-              <Button variant="outline" className="justify-start" onClick={() => notify("Compliance uploads are coming soon.", "info")}>
+              <ButtonLink to="/compliance" variant="outline" className="justify-start">
                 <FileUp className="size-4" />
-                Upload Compliance Document
-              </Button>
+                Review Clearance Documents
+              </ButtonLink>
             </div>
           </DashboardPanel>
 
@@ -235,20 +247,23 @@ export function DashboardPage() {
           <DashboardPanel title="Compliance Watch" icon={<FileCheck2 className="size-5" />}>
             {isLoading ? (
               <LoadingRows />
-            ) : metrics?.complianceWatch.length ? (
+            ) : clearance?.rows.filter((row) => row.clearance.overallStatus !== "Cleared").length ? (
               <div className="space-y-3">
-                {metrics.complianceWatch.map((candidate) => (
+                {clearance.rows
+                  .filter((row) => row.clearance.overallStatus !== "Cleared")
+                  .slice(0, 5)
+                  .map(({ candidate, clearance: candidateClearance }) => (
                   <MiniRecord
                     key={candidate.id}
                     title={fullName(candidate.first_name, candidate.last_name)}
-                    meta={`Expiry ${formatDate(candidate.compliance_expiry_date)}`}
-                    extra={candidate.compliance_status || "Missing"}
-                    tone={statusTone(candidate.compliance_status)}
+                    meta={`${candidateClearance.missingCount} missing checks · expiry ${formatDate(candidateClearance.nextExpiryDate)}`}
+                    extra={candidateClearance.overallStatus}
+                    tone={statusTone(candidateClearance.overallStatus)}
                   />
-                ))}
+                  ))}
               </div>
             ) : (
-              <EmptyState icon={FileCheck2} title="Compliance clear" body="Missing and expiring candidate checks will appear here." />
+              <EmptyState icon={FileCheck2} title="School clearance clear" body="DBS, safeguarding and Right to Work risks will appear here." />
             )}
           </DashboardPanel>
 

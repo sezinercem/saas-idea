@@ -1,7 +1,9 @@
-import { ArrowLeft, CalendarClock, FileCheck2, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarClock, Mail, Phone, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
+import { CandidateActivityTimeline } from "./CandidateActivityTimeline";
+import { CandidateCompliancePanel } from "../compliance/CandidateCompliancePanel";
 import { DocumentsPanel } from "../documents/DocumentsPanel";
 import { NotesPanel } from "../notes/NotesPanel";
 import { Select } from "../../components/forms/Select";
@@ -15,9 +17,11 @@ import { useToast } from "../../hooks/useToast";
 import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
+import { getCandidateClearance } from "../../lib/compliance";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
 import { candidateStatuses, statusOptions } from "../../lib/workflow";
+import type { OverallClearanceStatus } from "../../types/agency";
 import type { Candidate, CandidateInput, CandidateStatus, PlacementWithRelations } from "../../types/recruitment";
 
 export function CandidateDetailPage() {
@@ -27,6 +31,7 @@ export function CandidateDetailPage() {
   const { agency } = useAgency();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
+  const [clearanceStatus, setClearanceStatus] = useState<OverallClearanceStatus>("Non-Compliant");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,15 +40,20 @@ export function CandidateDetailPage() {
 
     setIsLoading(true);
     try {
-      const [candidateRow, placementRows] = await Promise.all([getCandidate(id), listCandidatePlacements(id)]);
+      const [candidateRow, placementRows, clearance] = await Promise.all([
+        getCandidate(id),
+        listCandidatePlacements(id),
+        agency ? getCandidateClearance(agency.id, id) : Promise.resolve(null),
+      ]);
       setCandidate(candidateRow);
       setPlacements(placementRows);
+      if (clearance) setClearanceStatus(clearance.overallStatus);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load candidate.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [id, notify]);
+  }, [agency, id, notify]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -111,7 +121,10 @@ export function CandidateDetailPage() {
                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Created {formatDate(candidate.created_at)}</p>
               </div>
             </div>
-            <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
+            <div className="flex flex-col items-end gap-2">
+              <Badge tone={statusTone(clearanceStatus)}>{clearanceStatus}</Badge>
+              <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -144,22 +157,7 @@ export function CandidateDetailPage() {
           </div>
         </Card>
 
-        <Card className="lg:col-span-6">
-          <div className="flex items-center gap-2">
-            <FileCheck2 className="size-5 text-brand-600 dark:text-brand-100" />
-            <h2 className="text-lg font-semibold">Compliance information</h2>
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <InfoBlock label="Right to work" value={candidate.right_to_work_status || "Not started"} />
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Status</p>
-              <Badge className="mt-2" tone={statusTone(candidate.compliance_status)}>
-                {candidate.compliance_status || "Missing"}
-              </Badge>
-            </div>
-            <InfoBlock label="Expiry" value={formatDate(candidate.compliance_expiry_date)} />
-          </div>
-        </Card>
+        <CandidateCompliancePanel candidateId={candidate.id} onStatusChange={loadCandidate} />
 
         <Card className="lg:col-span-5">
           <h2 className="text-lg font-semibold">Notes</h2>
@@ -194,6 +192,10 @@ export function CandidateDetailPage() {
 
         <div className="space-y-6 lg:col-span-6">
           <DocumentsPanel entityType="candidate" entityId={candidate.id} />
+        </div>
+
+        <div className="lg:col-span-12">
+          <CandidateActivityTimeline candidateId={candidate.id} />
         </div>
       </div>
 

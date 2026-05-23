@@ -1,6 +1,8 @@
 import { CalendarCheck, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { PlacementForm } from "./PlacementForm";
+import { Textarea } from "../../components/forms/Textarea";
+import { Alert } from "../../components/ui/Alert";
 import { Badge } from "../../components/ui/Badge";
 import { statusTone } from "../../lib/status";
 import { Button } from "../../components/ui/Button";
@@ -12,17 +14,22 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, fullName } from "../../lib/format";
-import { createPlacement, deletePlacement, listCandidates, listJobs, listPlacements } from "../../lib/recruitment";
+import { getCandidateClearance } from "../../lib/compliance";
+import { createActivityLog, createPlacement, deletePlacement, listCandidates, listJobs, listPlacements } from "../../lib/recruitment";
+import type { CandidateClearance } from "../../types/agency";
 import type { Candidate, Job, PlacementInput, PlacementWithRelations } from "../../types/recruitment";
 
 export function PlacementsPage() {
   const { user } = useAuth();
-  const { agency } = useAgency();
+  const { agency, role } = useAgency();
   const { notify } = useToast();
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [clearances, setClearances] = useState<Record<string, CandidateClearance>>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [blockedInput, setBlockedInput] = useState<PlacementInput | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   const loadPlacements = useCallback(async () => {
@@ -32,12 +39,16 @@ export function PlacementsPage() {
       setPlacements(placementRows);
       setCandidates(candidateRows);
       setJobs(jobRows);
+      if (agency) {
+        const clearanceRows = await Promise.all(candidateRows.map((candidate) => getCandidateClearance(agency.id, candidate.id)));
+        setClearances(Object.fromEntries(clearanceRows.map((clearance) => [clearance.candidateId, clearance])));
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load placements.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [notify]);
+  }, [agency, notify]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -46,10 +57,44 @@ export function PlacementsPage() {
   }, [loadPlacements]);
 
   const handleSubmit = async (input: PlacementInput) => {
-    if (!user) return;
+    if (!user || !agency) return;
+    const clearance = clearances[input.candidate_id] ?? (await getCandidateClearance(agency.id, input.candidate_id));
 
-    await createPlacement(user.id, input, agency?.id);
+    if (clearance.overallStatus !== "Cleared") {
+      await createActivityLog(agency.id, user.id, "candidate", input.candidate_id, "placement.blocked_compliance", {
+        candidate_id: input.candidate_id,
+        clearance_status: clearance.overallStatus,
+      });
+      setBlockedInput(input);
+      return;
+    }
+
+    await createPlacement(user.id, input, agency.id);
     notify("Placement created.", "success");
+    setIsModalOpen(false);
+    await loadPlacements();
+  };
+
+  const canOverride = role === "owner" || role === "admin";
+
+  const handleOverride = async () => {
+    if (!user || !agency || !blockedInput || !overrideReason.trim()) return;
+    const overrideInput: PlacementInput = {
+      ...blockedInput,
+      compliance_override: true,
+      compliance_override_reason: overrideReason.trim(),
+      compliance_override_by: user.id,
+      compliance_override_at: new Date().toISOString(),
+    };
+    const placement = await createPlacement(user.id, overrideInput, agency.id);
+    await createActivityLog(agency.id, user.id, "candidate", blockedInput.candidate_id, "placement.compliance_override_used", {
+      placement_id: placement.id,
+      candidate_id: blockedInput.candidate_id,
+      reason: overrideReason.trim(),
+    });
+    notify("Placement created with compliance override.", "success");
+    setBlockedInput(null);
+    setOverrideReason("");
     setIsModalOpen(false);
     await loadPlacements();
   };
@@ -70,7 +115,7 @@ export function PlacementsPage() {
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Placements</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Placement management</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Connect candidates to jobs and track start dates.</p>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">Only candidates cleared for school work can proceed without approval override.</p>
         </div>
         <Button onClick={() => setIsModalOpen(true)} disabled={!canCreatePlacement}>
           <Plus className="size-4" />
@@ -134,7 +179,38 @@ export function PlacementsPage() {
         description="Select a candidate, job, start date, and placement status."
         size="lg"
       >
-        <PlacementForm candidates={candidates} jobs={jobs} onCancel={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
+        <PlacementForm candidates={candidates} clearances={clearances} jobs={jobs} onCancel={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(blockedInput)}
+        onClose={() => setBlockedInput(null)}
+        title="Candidate not cleared for placement"
+        description="This candidate is not cleared for placement in a school."
+      >
+        <Alert tone="error">Complete required DBS, safeguarding, Right to Work and safer recruitment checks before placing this candidate.</Alert>
+        {canOverride ? (
+          <div className="mt-5 space-y-4">
+            <Textarea
+              label="Override reason"
+              value={overrideReason}
+              onChange={(event) => setOverrideReason(event.target.value)}
+              placeholder="Explain why this exceptional school placement is authorised."
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setBlockedInput(null)}>
+                Cancel
+              </Button>
+              <Button disabled={!overrideReason.trim()} onClick={handleOverride}>
+                Authorise override
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-5 text-sm text-slate-600 dark:text-slate-300">
+            Only an agency owner or administrator can authorise a compliance override.
+          </p>
+        )}
       </Modal>
     </div>
   );

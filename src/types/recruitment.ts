@@ -37,6 +37,10 @@ export type Placement = {
   job_id: string | null;
   start_date: string | null;
   status: string | null;
+  compliance_override: boolean;
+  compliance_override_reason: string | null;
+  compliance_override_by: string | null;
+  compliance_override_at: string | null;
   created_at: string | null;
 };
 
@@ -77,4 +81,8 @@ export type PlacementInput = {
   job_id: string;
   start_date: string;
   status: string;
+  compliance_override?: boolean;
+  compliance_override_reason?: string | null;
+  compliance_override_by?: string | null;
+  compliance_override_at?: string | null;
 };

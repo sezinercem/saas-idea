@@ -47,7 +47,7 @@ export function LoginPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Log in to your workspace</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Access your recruitment operations dashboard.
+            Access your education recruitment and candidate clearance workspace.
           </p>
         </div>
 

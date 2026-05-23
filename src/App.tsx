@@ -74,11 +74,7 @@ function App() {
                       <Route path="/placements" element={<PlacementsPage />} />
                       <Route
                         path="/compliance"
-                        element={
-                          <RoleGuard allowed={["owner", "admin", "compliance"]}>
-                            <CompliancePage />
-                          </RoleGuard>
-                        }
+                        element={<CompliancePage />}
                       />
                       <Route path="/follow-ups" element={<FollowUpsPage />} />
                       <Route path="/reports" element={<ReportsPage />} />

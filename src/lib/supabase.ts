@@ -70,9 +70,35 @@ type Database = {
       };
       candidate_compliance: {
         Row: CandidateCompliance;
-        Insert: Omit<CandidateCompliance, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Insert: Pick<CandidateCompliance, "agency_id" | "candidate_id" | "status"> & {
+          id?: string;
+          compliance_type_id?: string | null;
+          expiry_date?: string | null;
+          document_id?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          reviewer_notes?: string | null;
+          rejection_reason?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
         Update: Partial<Omit<CandidateCompliance, "id" | "agency_id" | "candidate_id" | "created_at">>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "candidate_compliance_compliance_type_id_fkey";
+            columns: ["compliance_type_id"];
+            isOneToOne: false;
+            referencedRelation: "compliance_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "candidate_compliance_document_id_fkey";
+            columns: ["document_id"];
+            isOneToOne: false;
+            referencedRelation: "documents";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       jobs: {
         Row: Job;
@@ -85,9 +111,16 @@ type Database = {
       };
       placements: {
         Row: Placement;
-        Insert: Omit<Placement, "id" | "created_at"> & {
+        Insert: Omit<
+          Placement,
+          "id" | "created_at" | "compliance_override" | "compliance_override_reason" | "compliance_override_by" | "compliance_override_at"
+        > & {
           id?: string;
           created_at?: string | null;
+          compliance_override?: boolean;
+          compliance_override_reason?: string | null;
+          compliance_override_by?: string | null;
+          compliance_override_at?: string | null;
         };
         Update: Partial<Omit<Placement, "id" | "created_by" | "created_at">>;
         Relationships: [

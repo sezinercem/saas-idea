@@ -100,26 +100,6 @@ export function CandidateForm({ candidate, onCancel, onSubmit }: CandidateFormPr
         placeholder="Call about availability"
         onChange={(event) => updateField("follow_up_reason", event.target.value)}
       />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Input
-          label="Right to work"
-          value={form.right_to_work_status}
-          placeholder="Checked, pending, not started"
-          onChange={(event) => updateField("right_to_work_status", event.target.value)}
-        />
-        <Select
-          label="Compliance status"
-          options={statusOptions(complianceStatuses)}
-          value={form.compliance_status}
-          onChange={(event) => updateField("compliance_status", event.target.value)}
-        />
-        <Input
-          label="Compliance expiry"
-          type="date"
-          value={form.compliance_expiry_date}
-          onChange={(event) => updateField("compliance_expiry_date", event.target.value)}
-        />
-      </div>
       <Textarea label="Notes" value={form.notes} onChange={(event) => updateField("notes", event.target.value)} />
       {error ? <p className="text-sm font-semibold text-red-600 dark:text-red-400">{error}</p> : null}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

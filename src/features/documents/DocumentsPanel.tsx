@@ -49,7 +49,7 @@ export function DocumentsPanel({ entityId, entityType }: { entityId: string; ent
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Documents</h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Preview support is planned; uploads are stored in Supabase Storage.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Supporting safer recruitment files are stored privately in Supabase Storage.</p>
         </div>
         <label className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition hover:bg-brand-700">
           <Upload className="size-4" />

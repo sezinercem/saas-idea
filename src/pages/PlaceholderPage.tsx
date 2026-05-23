@@ -16,7 +16,7 @@ const pages: Record<string, { body: string; icon: LucideIcon; title: string }> =
   },
   reports: {
     title: "Reports workspace",
-    body: "Operational reporting for pipeline health, placements, compliance, and booking performance is coming soon.",
+    body: "Reporting for education pipelines, school placements and safer recruitment clearance is coming soon.",
     icon: BarChart3,
   },
 };

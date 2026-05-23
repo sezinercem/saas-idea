@@ -1,5 +1,6 @@
 import { listCandidates, listJobs, listPlacements } from "./recruitment";
 import { fullName } from "./format";
+import { getCandidateClearance } from "./compliance";
 
 export type SearchResult = {
   group: "Candidates" | "Jobs" | "Placements";
@@ -9,10 +10,13 @@ export type SearchResult = {
   href: string;
 };
 
-export async function globalSearch(query: string): Promise<SearchResult[]> {
+export async function globalSearch(query: string, agencyId?: string): Promise<SearchResult[]> {
   if (!query.trim()) return [];
 
   const [candidates, jobs, placements] = await Promise.all([listCandidates(query), listJobs(query), listPlacements()]);
+  const candidateClearances = agencyId
+    ? await Promise.all(candidates.slice(0, 5).map((candidate) => getCandidateClearance(agencyId, candidate.id)))
+    : [];
   const normalized = query.toLowerCase();
 
   const placementResults = placements
@@ -30,11 +34,11 @@ export async function globalSearch(query: string): Promise<SearchResult[]> {
     }));
 
   return [
-    ...candidates.slice(0, 5).map<SearchResult>((candidate) => ({
+    ...candidates.slice(0, 5).map<SearchResult>((candidate, index) => ({
       group: "Candidates",
       id: candidate.id,
       title: fullName(candidate.first_name, candidate.last_name),
-      subtitle: candidate.email || candidate.status || "Candidate",
+      subtitle: `${candidateClearances[index]?.overallStatus || "Clearance not checked"} · ${candidate.email || "Candidate"}`,
       href: `/candidates/${candidate.id}`,
     })),
     ...jobs.slice(0, 5).map<SearchResult>((job) => ({

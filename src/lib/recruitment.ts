@@ -198,7 +198,15 @@ export async function listJobPlacements(jobId: string) {
 export async function createPlacement(createdBy: string, input: PlacementInput, agencyId?: string | null) {
   const { data, error } = await getClient()
     .from("placements")
-    .insert({ ...input, created_by: createdBy, agency_id: agencyId ?? null })
+    .insert({
+      ...input,
+      compliance_override: input.compliance_override ?? false,
+      compliance_override_reason: input.compliance_override_reason ?? null,
+      compliance_override_by: input.compliance_override_by ?? null,
+      compliance_override_at: input.compliance_override_at ?? null,
+      created_by: createdBy,
+      agency_id: agencyId ?? null,
+    })
     .select("*, candidates(id, first_name, last_name, email), jobs(id, company_name, job_title, location)")
     .single();
 

@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "../ui/Badge";
 import { Skeleton } from "../ui/Skeleton";
+import { useAgency } from "../../hooks/useAgency";
 import { globalSearch, type SearchResult } from "../../lib/search";
 
 export function CommandPalette({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
+  const { agency } = useAgency();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,13 +28,13 @@ export function CommandPalette({ isOpen, setIsOpen }: { isOpen: boolean; setIsOp
     const timeout = window.setTimeout(async () => {
       setIsLoading(true);
       try {
-        setResults(await globalSearch(query));
+        setResults(await globalSearch(query, agency?.id));
       } finally {
         setIsLoading(false);
       }
     }, 250);
     return () => window.clearTimeout(timeout);
-  }, [isOpen, query]);
+  }, [agency?.id, isOpen, query]);
 
   if (!isOpen) return null;
 

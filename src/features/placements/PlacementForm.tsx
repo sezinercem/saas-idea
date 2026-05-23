@@ -3,18 +3,20 @@ import { Select } from "../../components/forms/Select";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { fullName } from "../../lib/format";
+import type { CandidateClearance } from "../../types/agency";
 import type { Candidate, Job, PlacementInput } from "../../types/recruitment";
 
 const statuses = ["Pending", "Confirmed", "Active", "Completed", "Cancelled"].map((status) => ({ label: status, value: status }));
 
 type PlacementFormProps = {
   candidates: Candidate[];
+  clearances?: Record<string, CandidateClearance>;
   jobs: Job[];
   onCancel: () => void;
   onSubmit: (input: PlacementInput) => Promise<void>;
 };
 
-export function PlacementForm({ candidates, jobs, onCancel, onSubmit }: PlacementFormProps) {
+export function PlacementForm({ candidates, clearances, jobs, onCancel, onSubmit }: PlacementFormProps) {
   const [form, setForm] = useState<PlacementInput>({
     candidate_id: candidates[0]?.id ?? "",
     job_id: jobs[0]?.id ?? "",
@@ -54,7 +56,7 @@ export function PlacementForm({ candidates, jobs, onCancel, onSubmit }: Placemen
         value={form.candidate_id}
         onChange={(event) => updateField("candidate_id", event.target.value)}
         options={candidates.map((candidate) => ({
-          label: fullName(candidate.first_name, candidate.last_name),
+          label: `${fullName(candidate.first_name, candidate.last_name)} · ${clearances?.[candidate.id]?.overallStatus || "Clearance pending"}`,
           value: candidate.id,
         }))}
       />

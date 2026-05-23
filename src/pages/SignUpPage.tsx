@@ -55,7 +55,7 @@ export function SignUpPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Start your free trial</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Create the first admin user for your staffing workspace.
+            Create the first administrator for your education recruitment agency.
           </p>
         </div>
 

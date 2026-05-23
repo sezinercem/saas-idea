@@ -5,23 +5,23 @@ import { Card } from "../components/ui/Card";
 
 const features = [
   {
-    title: "Candidate pipeline",
-    body: "Placeholder workflows for sourcing, screening, and moving talent through each stage.",
+    title: "Education candidate pipeline",
+    body: "Track teachers and support staff from registration through school placement readiness.",
     icon: UsersRound,
   },
   {
-    title: "Placement visibility",
-    body: "Track upcoming placements, active assignments, and team ownership from one dashboard.",
+    title: "School placement visibility",
+    body: "Track upcoming school placements, live assignments, and clearance gating from one dashboard.",
     icon: CheckCircle2,
   },
   {
-    title: "Compliance readiness",
-    body: "Prepare the structure for document checks, expiry alerts, and audit-friendly records.",
+    title: "Safer recruitment clearance",
+    body: "Review Enhanced DBS, safeguarding and Right to Work checks with expiry alerts and audit history.",
     icon: FileCheck2,
   },
   {
-    title: "Booking coordination",
-    body: "A future-ready base for shifts, bookings, and workforce scheduling workflows.",
+    title: "Supply coordination",
+    body: "A focused foundation for education bookings and availability workflows as your agency grows.",
     icon: CalendarDays,
   },
 ];
@@ -35,13 +35,13 @@ export function LandingPage() {
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-24">
             <div>
               <p className="mb-5 inline-flex rounded-full border border-blue-200 bg-brand-50 px-3 py-1 text-sm font-semibold text-brand-700 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-brand-100">
-                Built for modern staffing operators
+                Built for education recruitment agencies
               </p>
               <h1 className="max-w-4xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl dark:text-white">
-                Manage recruitment workflows from candidate to booking.
+                Clear candidates for confident school placements.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
-                RecruitFlow gives staffing teams a clean foundation for authentication, teams, profiles, and the first operational dashboard.
+                RecruitFlow brings education candidate pipelines, safer recruitment checks, and placement readiness into one operational workspace.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <ButtonLink to="/signup" className="h-12 px-5">
@@ -58,8 +58,8 @@ export function LandingPage() {
               <div className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
                   <div>
-                    <p className="text-sm font-semibold">Today&apos;s workforce pulse</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Placeholder analytics</p>
+                    <p className="text-sm font-semibold">Today&apos;s clearance pulse</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Education operations snapshot</p>
                   </div>
                   <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
                     Live ready
@@ -69,8 +69,8 @@ export function LandingPage() {
                   {[
                     ["Candidates", "128"],
                     ["Placements", "34"],
-                    ["Bookings", "72"],
-                    ["Compliance", "91%"],
+                    ["School placements", "72"],
+                    ["Cleared", "91%"],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
                       <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
@@ -86,9 +86,9 @@ export function LandingPage() {
         <section id="features" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">
-              Foundation first
+              Safer recruitment first
             </p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Everything needed before the CRM layer.</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Clearance control for school staffing teams.</h2>
           </div>
           <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {features.map((feature) => (
@@ -105,7 +105,7 @@ export function LandingPage() {
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Pricing</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Simple starter pricing for MVP teams.</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Simple starter pricing for education agencies.</h2>
               <p className="mt-4 text-slate-600 dark:text-slate-300">
                 Pricing is intentionally lightweight while the platform foundation is being built.
               </p>
@@ -124,7 +124,7 @@ export function LandingPage() {
       <footer className="bg-slate-950 px-4 py-8 text-slate-300 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-semibold text-white">RecruitFlow</p>
-          <p className="text-sm">Foundation for recruitment and workforce management teams.</p>
+          <p className="text-sm">Safer recruitment operations for education agencies.</p>
         </div>
       </footer>
     </div>

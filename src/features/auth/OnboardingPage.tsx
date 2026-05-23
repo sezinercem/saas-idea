@@ -48,8 +48,8 @@ export function OnboardingPage() {
         <Logo />
         <Card className="mt-10">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Agency onboarding</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">Set up your recruitment workspace</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">A few basics help RecruitFlow behave like an agency operating system.</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Set up your education agency</h1>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">A few basics prepare your safer recruitment and school placement workspace.</p>
 
           {error ? (
             <Alert className="mt-6" tone="error">
@@ -59,14 +59,14 @@ export function OnboardingPage() {
 
           <form className="mt-8 space-y-6" onSubmit={handleFinish}>
             {step === 0 ? (
-              <Input label="Agency name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Northstar Staffing" />
+              <Input label="Agency name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Northstar Education" />
             ) : null}
             {step === 1 ? (
               <Input
-                label="Recruitment niche"
+                label="Education staffing focus"
                 value={recruitmentNiche}
                 onChange={(event) => setRecruitmentNiche(event.target.value)}
-                placeholder="Healthcare, industrial, education..."
+                placeholder="Primary supply, SEND, teaching assistants..."
               />
             ) : null}
             {step === 2 ? <Select label="Team size" value={teamSize} onChange={(event) => setTeamSize(event.target.value)} options={teamSizes} /> : null}
@@ -83,7 +83,7 @@ export function OnboardingPage() {
               <div className="rounded-lg bg-emerald-50 p-6 text-center text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200">
                 <CheckCircle2 className="mx-auto size-8" />
                 <h2 className="mt-4 text-lg font-semibold">Ready to launch</h2>
-                <p className="mt-2 text-sm">Finish setup to enter the command centre.</p>
+                <p className="mt-2 text-sm">Finish setup to manage education clearance and placements.</p>
               </div>
             ) : null}
 

@@ -2,6 +2,7 @@ import { Edit3, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
+import { Select } from "../../components/forms/Select";
 import { Badge } from "../../components/ui/Badge";
 import { statusTone } from "../../lib/status";
 import { Button } from "../../components/ui/Button";
@@ -14,15 +15,24 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
 import { fullName, formatDate } from "../../lib/format";
+import { getCandidateClearance } from "../../lib/compliance";
 import { createCandidate, deleteCandidate, listCandidates, updateCandidate } from "../../lib/recruitment";
+import type { CandidateClearance } from "../../types/agency";
 import type { Candidate, CandidateInput } from "../../types/recruitment";
+
+const complianceFilters = ["All", "Cleared", "Pending Review", "Expiring Soon", "Non-Compliant", "Missing Documents"].map((value) => ({
+  label: value,
+  value,
+}));
 
 export function CandidatesPage() {
   const { user } = useAuth();
   const { agency } = useAgency();
   const { notify } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [clearances, setClearances] = useState<Record<string, CandidateClearance>>({});
   const [search, setSearch] = useState("");
+  const [complianceFilter, setComplianceFilter] = useState("All");
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,13 +40,18 @@ export function CandidatesPage() {
   const loadCandidates = useCallback(async () => {
     setIsLoading(true);
     try {
-      setCandidates(await listCandidates(search));
+      const rows = await listCandidates(search);
+      setCandidates(rows);
+      if (agency) {
+        const clearanceRows = await Promise.all(rows.map((candidate) => getCandidateClearance(agency.id, candidate.id)));
+        setClearances(Object.fromEntries(clearanceRows.map((clearance) => [clearance.candidateId, clearance])));
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load candidates.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [notify, search]);
+  }, [agency, notify, search]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -77,13 +92,20 @@ export function CandidatesPage() {
     await loadCandidates();
   };
 
+  const visibleCandidates = candidates.filter((candidate) => {
+    const clearance = clearances[candidate.id];
+    if (complianceFilter === "All") return true;
+    if (complianceFilter === "Missing Documents") return Boolean(clearance?.missingCount);
+    return clearance?.overallStatus === complianceFilter;
+  });
+
   return (
     <div className="mx-auto max-w-7xl">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Candidates</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Candidate management</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Track people moving through your recruitment workflow.</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Education candidate clearance</h1>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">Track safer recruitment readiness before school placements.</p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="size-4" />
@@ -92,26 +114,29 @@ export function CandidatesPage() {
       </div>
 
       <Card className="mt-8">
-        <div className="relative max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-          <Input
-            label="Search candidates"
-            className="pl-10"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Name, email, phone, status"
-          />
+        <div className="grid gap-4 md:grid-cols-[1fr_240px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
+            <Input
+              label="Search candidates"
+              className="pl-10"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Name, email, DBS or clearance status"
+            />
+          </div>
+          <Select label="Compliance filter" options={complianceFilters} value={complianceFilter} onChange={(event) => setComplianceFilter(event.target.value)} />
         </div>
       </Card>
 
       <div className="mt-6">
         {isLoading ? (
           <TableSkeleton />
-        ) : candidates.length === 0 ? (
+        ) : visibleCandidates.length === 0 ? (
           <EmptyState
             icon={UserRound}
             title="No candidates yet"
-            body="Add your first candidate to start building the recruitment pipeline."
+            body="Add a candidate to begin the education safer recruitment clearance process."
             action={<Button onClick={openCreateModal}>Add candidate</Button>}
           />
         ) : (
@@ -122,15 +147,15 @@ export function CandidatesPage() {
                   <tr>
                     <th className="px-5 py-4">Name</th>
                     <th className="px-5 py-4">Contact</th>
-                      <th className="px-5 py-4">Workflow</th>
-                      <th className="px-5 py-4">Compliance</th>
-                      <th className="px-5 py-4">Follow-up</th>
-                      <th className="px-5 py-4">Created</th>
+                    <th className="px-5 py-4">Workflow</th>
+                    <th className="px-5 py-4">Clearance</th>
+                    <th className="px-5 py-4">Next expiry</th>
+                    <th className="px-5 py-4">Created</th>
                     <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {candidates.map((candidate) => (
+                  {visibleCandidates.map((candidate) => (
                     <tr key={candidate.id}>
                       <td className="px-5 py-4">
                         <Link className="font-semibold text-slate-950 hover:text-brand-600 dark:text-white" to={`/candidates/${candidate.id}`}>
@@ -145,9 +170,12 @@ export function CandidatesPage() {
                         <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
                       </td>
                       <td className="px-5 py-4">
-                        <Badge tone={statusTone(candidate.compliance_status)}>{candidate.compliance_status || "Missing"}</Badge>
+                        <Badge tone={statusTone(clearances[candidate.id]?.overallStatus)}>
+                          {clearances[candidate.id]?.overallStatus || "Non-Compliant"}
+                        </Badge>
+                        <p className="mt-1 text-xs text-slate-500">{clearances[candidate.id]?.missingCount ?? 0} missing</p>
                       </td>
-                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(candidate.next_follow_up_date)}</td>
+                      <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(clearances[candidate.id]?.nextExpiryDate)}</td>
                       <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(candidate.created_at)}</td>
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
@@ -166,7 +194,7 @@ export function CandidatesPage() {
             </div>
 
             <div className="grid gap-4 lg:hidden">
-              {candidates.map((candidate) => (
+              {visibleCandidates.map((candidate) => (
                 <Card key={candidate.id}>
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -177,10 +205,14 @@ export function CandidatesPage() {
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <Badge tone={statusTone(candidate.status)}>{candidate.status || "New"}</Badge>
-                      <Badge tone={statusTone(candidate.compliance_status)}>{candidate.compliance_status || "Missing"}</Badge>
+                      <Badge tone={statusTone(clearances[candidate.id]?.overallStatus)}>
+                        {clearances[candidate.id]?.overallStatus || "Non-Compliant"}
+                      </Badge>
                     </div>
                   </div>
-                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Follow-up {formatDate(candidate.next_follow_up_date)}</p>
+                  <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                    {clearances[candidate.id]?.missingCount ?? 0} missing checks · next expiry {formatDate(clearances[candidate.id]?.nextExpiryDate)}
+                  </p>
                   <div className="mt-4 flex gap-2">
                     <Button variant="outline" onClick={() => openEditModal(candidate)}>
                       Edit
@@ -200,7 +232,7 @@ export function CandidatesPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={selectedCandidate ? "Edit candidate" : "Add candidate"}
-        description="Capture the core staffing details for this candidate."
+        description="Capture core education staffing details, then complete the clearance checklist."
         size="lg"
       >
         <CandidateForm candidate={selectedCandidate} onCancel={() => setIsModalOpen(false)} onSubmit={handleSubmit} />

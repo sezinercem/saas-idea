@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { noteSchema } from "./validation";
-import type { DocumentRecord, Note } from "../types/agency";
+import type { ActivityLog, DocumentRecord, Note } from "../types/agency";
 
 function getClient() {
   if (!supabase) throw new Error("Supabase is not configured.");
@@ -67,4 +67,18 @@ export async function deleteDocument(document: DocumentRecord) {
 
   const { error } = await client.from("documents").delete().eq("id", document.id);
   if (error) throw error;
+}
+
+export async function listEntityActivity(agencyId: string, entityType: string, entityId: string) {
+  const { data, error } = await getClient()
+    .from("activity_logs")
+    .select("*")
+    .eq("agency_id", agencyId)
+    .eq("entity_type", entityType)
+    .eq("entity_id", entityId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+  return (data ?? []) as ActivityLog[];
 }
