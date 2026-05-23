@@ -26,6 +26,17 @@ export type Job = {
   pay_rate: string | null;
   status: string | null;
   notes: string | null;
+  job_type: JobType;
+  start_date: string | null;
+  end_date: string | null;
+  school_name: string | null;
+  subject: string | null;
+  year_group: string | null;
+  daily_rate: string | null;
+  shift_date: string | null;
+  vacancies: number;
+  compliance_required: boolean;
+  published: boolean;
   created_at: string | null;
 };
 
@@ -51,6 +62,7 @@ export type PlacementWithRelations = Placement & {
 
 export type CandidateStatus = "New" | "Contacted" | "Interviewing" | "Placed" | "Archived";
 export type JobStatus = "Draft" | "Open" | "Interviewing" | "Filled" | "Closed";
+export type JobType = "Permanent" | "Long-Term" | "Daily Supply" | "Short-Term";
 export type ComplianceStatus = "Missing" | "Pending" | "Complete" | "Expiring Soon";
 
 export type CandidateInput = {
@@ -74,6 +86,17 @@ export type JobInput = {
   pay_rate: string;
   status: JobStatus;
   notes: string;
+  job_type: JobType;
+  start_date: string;
+  end_date: string;
+  school_name: string;
+  subject: string;
+  year_group: string;
+  daily_rate: string;
+  shift_date: string;
+  vacancies: number;
+  compliance_required: boolean;
+  published: boolean;
 };
 
 export type PlacementInput = {

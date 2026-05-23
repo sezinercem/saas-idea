@@ -5,10 +5,12 @@ import { ToastProvider } from "./components/feedback/ToastProvider";
 import { AppLayout } from "./components/layout/AppLayout";
 import { OnboardingRoute } from "./components/layout/OnboardingRoute";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { PortalRoute } from "./components/layout/PortalRoute";
 import { RoleGuard } from "./components/layout/RoleGuard";
 import { AgencyProvider } from "./context/AgencyContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { PortalProvider } from "./context/PortalContext";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignUpPage } from "./pages/SignUpPage";
@@ -23,10 +25,22 @@ const CandidatesPage = lazy(() => import("./features/candidates/CandidatesPage")
 const JobDetailPage = lazy(() => import("./features/jobs/JobDetailPage").then((module) => ({ default: module.JobDetailPage })));
 const JobsPage = lazy(() => import("./features/jobs/JobsPage").then((module) => ({ default: module.JobsPage })));
 const PlacementsPage = lazy(() => import("./features/placements/PlacementsPage").then((module) => ({ default: module.PlacementsPage })));
+const ShiftsPage = lazy(() => import("./features/shifts/ShiftsPage").then((module) => ({ default: module.ShiftsPage })));
 const TeamPage = lazy(() => import("./features/team/TeamPage").then((module) => ({ default: module.TeamPage })));
 const CompliancePage = lazy(() => import("./features/compliance/CompliancePage").then((module) => ({ default: module.CompliancePage })));
 const FollowUpsPage = lazy(() => import("./features/followups/FollowUpsPage").then((module) => ({ default: module.FollowUpsPage })));
 const ReportsPage = lazy(() => import("./features/reports/ReportsPage").then((module) => ({ default: module.ReportsPage })));
+const PortalAcceptPage = lazy(() => import("./features/portal/PortalAcceptPage").then((module) => ({ default: module.PortalAcceptPage })));
+const PortalLoginPage = lazy(() => import("./features/portal/PortalLoginPage").then((module) => ({ default: module.PortalLoginPage })));
+const PortalLayout = lazy(() => import("./features/portal/PortalLayout").then((module) => ({ default: module.PortalLayout })));
+const PortalDashboardPage = lazy(() => import("./features/portal/PortalDashboardPage").then((module) => ({ default: module.PortalDashboardPage })));
+const PortalCompliancePage = lazy(() => import("./features/portal/PortalCompliancePage").then((module) => ({ default: module.PortalCompliancePage })));
+const PortalJobsPage = lazy(() => import("./features/portal/PortalJobsPage").then((module) => ({ default: module.PortalJobsPage })));
+const PortalShiftsPage = lazy(() => import("./features/portal/PortalShiftsPage").then((module) => ({ default: module.PortalShiftsPage })));
+const PortalApplicationsPage = lazy(() => import("./features/portal/PortalApplicationsPage").then((module) => ({ default: module.PortalApplicationsPage })));
+const PortalBookingsPage = lazy(() => import("./features/portal/PortalBookingsPage").then((module) => ({ default: module.PortalBookingsPage })));
+const PortalDocumentsPage = lazy(() => import("./features/portal/PortalDocumentsPage").then((module) => ({ default: module.PortalDocumentsPage })));
+const PortalProfilePage = lazy(() => import("./features/portal/PortalProfilePage").then((module) => ({ default: module.PortalProfilePage })));
 
 function RouteFallback() {
   return (
@@ -41,14 +55,33 @@ function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <AuthProvider>
-          <AgencyProvider>
-            <ToastProvider>
+          <PortalProvider>
+            <AgencyProvider>
+              <ToastProvider>
               <BrowserRouter>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signup" element={<SignUpPage />} />
+                    <Route path="/portal/login" element={<PortalLoginPage />} />
+                    <Route path="/portal/accept" element={<PortalAcceptPage />} />
+                    <Route
+                      element={
+                        <PortalRoute>
+                          <PortalLayout />
+                        </PortalRoute>
+                      }
+                    >
+                      <Route path="/portal" element={<PortalDashboardPage />} />
+                      <Route path="/portal/compliance" element={<PortalCompliancePage />} />
+                      <Route path="/portal/jobs" element={<PortalJobsPage />} />
+                      <Route path="/portal/shifts" element={<PortalShiftsPage />} />
+                      <Route path="/portal/applications" element={<PortalApplicationsPage />} />
+                      <Route path="/portal/bookings" element={<PortalBookingsPage />} />
+                      <Route path="/portal/documents" element={<PortalDocumentsPage />} />
+                      <Route path="/portal/profile" element={<PortalProfilePage />} />
+                    </Route>
                     <Route
                       path="/onboarding"
                       element={
@@ -73,6 +106,14 @@ function App() {
                       <Route path="/jobs/:id" element={<JobDetailPage />} />
                       <Route path="/placements" element={<PlacementsPage />} />
                       <Route
+                        path="/shifts"
+                        element={
+                          <RoleGuard allowed={["owner", "admin", "recruiter"]}>
+                            <ShiftsPage />
+                          </RoleGuard>
+                        }
+                      />
+                      <Route
                         path="/compliance"
                         element={<CompliancePage />}
                       />
@@ -92,8 +133,9 @@ function App() {
                   </Routes>
                 </Suspense>
               </BrowserRouter>
-            </ToastProvider>
-          </AgencyProvider>
+              </ToastProvider>
+            </AgencyProvider>
+          </PortalProvider>
         </AuthProvider>
       </ErrorBoundary>
     </ThemeProvider>

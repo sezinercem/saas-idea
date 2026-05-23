@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarClock, Mail, Phone, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarClock, Copy, Mail, Phone, Send, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getCandidateClearance } from "../../lib/compliance";
+import { createCandidatePortalInvite } from "../../lib/portal";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
 import { candidateStatuses, statusOptions } from "../../lib/workflow";
@@ -28,12 +29,15 @@ export function CandidateDetailPage() {
   const { id } = useParams();
   const { notify } = useToast();
   const { user } = useAuth();
-  const { agency } = useAgency();
+  const { agency, role } = useAgency();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [clearanceStatus, setClearanceStatus] = useState<OverallClearanceStatus>("Non-Compliant");
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteExpiresAt, setInviteExpiresAt] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const canInvite = role === "owner" || role === "admin" || role === "recruiter";
 
   const loadCandidate = useCallback(async () => {
     if (!id) return;
@@ -78,6 +82,22 @@ export function CandidateDetailPage() {
     await loadCandidate();
   };
 
+  const handleInvite = async () => {
+    if (!candidate) return;
+    if (!candidate.email) {
+      notify("Add the candidate email address before creating a portal invitation.", "error");
+      return;
+    }
+    try {
+      const invite = await createCandidatePortalInvite(candidate.id);
+      setInviteLink(invite.link);
+      setInviteExpiresAt(invite.expiresAt);
+      notify("Secure candidate portal invitation created.", "success");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to create portal invitation.", "error");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-6xl space-y-4">
@@ -106,7 +126,10 @@ export function CandidateDetailPage() {
           <ArrowLeft className="size-4" />
           Back to candidates
         </ButtonLink>
-        <Button onClick={() => setIsEditOpen(true)}>Edit candidate</Button>
+        <div className="flex gap-2">
+          {canInvite ? <Button variant="outline" onClick={handleInvite}><Send className="size-4" />Invite to Portal</Button> : null}
+          <Button onClick={() => setIsEditOpen(true)}>Edit candidate</Button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-12">
@@ -201,6 +224,24 @@ export function CandidateDetailPage() {
 
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit candidate" size="lg">
         <CandidateForm candidate={candidate} onCancel={() => setIsEditOpen(false)} onSubmit={handleEdit} />
+      </Modal>
+      <Modal isOpen={Boolean(inviteLink)} onClose={() => setInviteLink("")} title="Candidate portal invitation" size="md">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Send this one-time link securely to the candidate. It expires {formatDate(inviteExpiresAt)} and links only to your agency.
+        </p>
+        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm break-all dark:border-slate-800 dark:bg-slate-950">{inviteLink}</div>
+        <div className="mt-5 flex justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await navigator.clipboard.writeText(inviteLink);
+              notify("Invitation link copied.", "success");
+            }}
+          >
+            <Copy className="size-4" />Copy link
+          </Button>
+          <Button onClick={() => setInviteLink("")}>Done</Button>
+        </div>
       </Modal>
     </div>
   );

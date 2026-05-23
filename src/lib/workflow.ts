@@ -1,7 +1,8 @@
-import type { CandidateStatus, ComplianceStatus, JobStatus } from "../types/recruitment";
+import type { CandidateStatus, ComplianceStatus, JobStatus, JobType } from "../types/recruitment";
 
 export const candidateStatuses: CandidateStatus[] = ["New", "Contacted", "Interviewing", "Placed", "Archived"];
 export const jobStatuses: JobStatus[] = ["Draft", "Open", "Interviewing", "Filled", "Closed"];
+export const jobTypes: JobType[] = ["Permanent", "Long-Term", "Daily Supply", "Short-Term"];
 export const complianceStatuses: ComplianceStatus[] = ["Missing", "Pending", "Complete", "Expiring Soon"];
 
 export function statusOptions<T extends string>(statuses: T[]) {

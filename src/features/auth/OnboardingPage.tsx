@@ -1,6 +1,6 @@
 import { CheckCircle2, UsersRound } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Select } from "../../components/forms/Select";
 import { Logo } from "../../components/layout/Logo";
 import { Alert } from "../../components/ui/Alert";
@@ -9,12 +9,14 @@ import { Card } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
+import { usePortal } from "../../hooks/usePortal";
 import { completeAgencyOnboarding } from "../../lib/agency";
 
 const teamSizes = ["1-5", "6-20", "21-50", "51+"].map((value) => ({ label: value, value }));
 
 export function OnboardingPage() {
   const { agency, refreshAgency } = useAgency();
+  const { session } = usePortal();
   const { notify } = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -23,6 +25,8 @@ export function OnboardingPage() {
   const [teamSize, setTeamSize] = useState(agency?.team_size ?? "1-5");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  if (session) return <Navigate to="/portal" replace />;
 
   const handleFinish = async (event: FormEvent) => {
     event.preventDefault();

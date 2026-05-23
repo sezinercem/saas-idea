@@ -14,6 +14,9 @@ A React, TypeScript, Tailwind CSS, and Supabase platform for education recruitme
 - Education compliance centre for DBS, safeguarding, Right to Work, review queues, and expiry risk
 - Candidate clearance checklist with private document uploads and approval workflow
 - Placement guard with owner/admin recorded overrides for non-cleared candidates
+- Agency-scoped candidate portal with secure invite acceptance and separate candidate navigation
+- Published education jobs, supply shifts, clearance-gated applications, and booking requests
+- Candidate portal branding, notifications, and realtime booking/compliance refresh
 - Protected workspaces for compliance, follow-ups, and reports
 - Multi-tenant agency and team architecture
 - Activity logs, reusable notes, and document upload foundation
@@ -44,6 +47,8 @@ For the production architecture upgrade, run
 [supabase/migrations/20260523003000_multi_tenant_recruitment_architecture.sql](./supabase/migrations/20260523003000_multi_tenant_recruitment_architecture.sql).
 For education safer recruitment clearance, run
 [supabase/migrations/20260523090000_education_compliance_engine.sql](./supabase/migrations/20260523090000_education_compliance_engine.sql).
+For the candidate portal and school opportunity marketplace, run
+[supabase/migrations/20260523123000_candidate_portal_marketplace.sql](./supabase/migrations/20260523123000_candidate_portal_marketplace.sql).
 
 ## Project structure
 
@@ -65,7 +70,9 @@ src/
     jobs/        Job list, detail, forms
     notes/       Reusable entity notes
     placements/  Placement list and creation form
+    portal/      Candidate-only shell, onboarding, compliance and opportunities
     reports/     Reporting workspace placeholder
+    shifts/      Recruiter supply shift and booking request operations
     team/        Team management
   hooks/         Shared app hooks
   lib/           Supabase client and utilities
@@ -86,11 +93,22 @@ src/
 /jobs
 /jobs/:id
 /placements
+/shifts
 /compliance
 /follow-ups
 /reports
 /team
 /account
+/portal/login
+/portal/accept?token=...
+/portal
+/portal/compliance
+/portal/jobs
+/portal/shifts
+/portal/applications
+/portal/bookings
+/portal/documents
+/portal/profile
 ```
 
 ## Supabase Storage
@@ -103,6 +121,20 @@ Create/use the private bucket named `recruitment-documents`. The multi-tenant mi
 ```
 
 The bucket remains private. Education clearance files are opened through short-lived signed URLs, and approval/rejection is restricted to owners, admins, and compliance members.
+
+## Candidate portal workflow
+
+1. A recruiter opens a candidate record and selects **Invite to Portal**.
+2. The application creates a one-time invitation whose raw token is shown once; only its SHA-256 digest is stored in Supabase.
+3. The candidate opens the invitation link, creates an account with their invited email address, and becomes linked to that agency and candidate record.
+4. The candidate uploads safer recruitment evidence through **My Compliance**.
+5. Approved, unexpired required checks unlock applications and shift bookings. RLS enforces this clearance gate even for direct API requests.
+
+Candidates are not agency members and cannot view recruiter screens, other candidates, or opportunities published by another agency.
+
+## Realtime and verification
+
+Supabase Realtime subscriptions refresh candidate compliance, bookings, and notifications. Candidate uploads are marked `Queued` for automated verification and enter the recruiter review workflow. A production verification Edge Function or external webhook must be connected later to update `verification_status` and `verification_warnings`; this repository does not claim automated document judgement without that server-side service.
 
 ## Scripts
 

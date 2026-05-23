@@ -55,11 +55,28 @@ export async function listAgencyMembers(agencyId: string) {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as AgencyMemberWithProfile[];
+  return (data ?? []) as unknown as AgencyMemberWithProfile[];
 }
 
 export async function updateAgencyMemberRole(memberId: string, role: AgencyRole) {
   const { data, error } = await getClient().from("agency_members").update({ role }).eq("id", memberId).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateAgencyBranding(agencyId: string, input: { logo_url: string; primary_colour: string }) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(input.primary_colour)) {
+    throw new Error("Primary colour must be a 6 digit hex colour, for example #1d4ed8.");
+  }
+  if (input.logo_url && !URL.canParse(input.logo_url)) {
+    throw new Error("Enter a valid logo URL.");
+  }
+  const { data, error } = await getClient()
+    .from("agencies")
+    .update({ logo_url: input.logo_url || null, primary_colour: input.primary_colour })
+    .eq("id", agencyId)
+    .select()
+    .single();
   if (error) throw error;
   return data;
 }

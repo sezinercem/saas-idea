@@ -171,6 +171,12 @@ export function CandidateCompliancePanel({ candidateId, onStatusChange }: { cand
                       </Button>
                     ) : null}
                   </div>
+                  {item.verification_status !== "Not Started" ? (
+                    <p className="text-xs text-slate-500 lg:col-span-6">
+                      Verification: {item.verification_status}
+                      {item.verification_warnings.length ? ` - ${item.verification_warnings.join(" ")}` : ""}
+                    </p>
+                  ) : null}
                 </div>
               );
             })}

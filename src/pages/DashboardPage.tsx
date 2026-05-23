@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   BriefcaseBusiness,
   CalendarCheck,
+  CalendarDays,
   Clock3,
   FileCheck2,
   FileUp,
@@ -22,12 +23,14 @@ import { BarList } from "../features/dashboard/BarList";
 import { formatDate, fullName } from "../lib/format";
 import { getComplianceDashboard } from "../lib/compliance";
 import { getDashboardMetrics } from "../lib/recruitment";
+import { listAgencyApplications, listAgencyBookingRequests, listAgencyShifts } from "../lib/portal";
 import { statusTone } from "../lib/status";
 import { candidateStatuses, jobStatuses } from "../lib/workflow";
 import type { CandidateStatus } from "../types/recruitment";
 
 type DashboardMetrics = Awaited<ReturnType<typeof getDashboardMetrics>>;
 type ClearanceDashboard = Awaited<ReturnType<typeof getComplianceDashboard>>;
+type PortalOperations = { unfilledShifts: number; bookingRequests: number; applications: number };
 
 const summaryCards = [
   {
@@ -70,18 +73,27 @@ export function DashboardPage() {
   const { notify } = useToast();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [clearance, setClearance] = useState<ClearanceDashboard | null>(null);
+  const [portalOperations, setPortalOperations] = useState<PortalOperations | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const displayName = profile?.full_name || user?.email;
 
   const loadMetrics = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [metricData, clearanceData] = await Promise.all([
+      const [metricData, clearanceData, shifts, bookings, applications] = await Promise.all([
         getDashboardMetrics(),
         agency ? getComplianceDashboard(agency.id) : Promise.resolve(null),
+        listAgencyShifts(),
+        listAgencyBookingRequests(),
+        listAgencyApplications(),
       ]);
       setMetrics(metricData);
       setClearance(clearanceData);
+      setPortalOperations({
+        unfilledShifts: shifts.filter((shift) => shift.status === "Open" && shift.vacancies > 0).length,
+        bookingRequests: bookings.filter((booking) => booking.booking_status === "Pending").length,
+        applications: applications.filter((application) => application.status === "Applied").length,
+      });
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load dashboard.", "error");
     } finally {
@@ -221,7 +233,23 @@ export function DashboardPage() {
                 <FileUp className="size-4" />
                 Review Clearance Documents
               </ButtonLink>
+              <ButtonLink to="/shifts" variant="outline" className="justify-start">
+                <CalendarDays className="size-4" />
+                Publish School Shift
+              </ButtonLink>
             </div>
+          </DashboardPanel>
+
+          <DashboardPanel title="Candidate Portal Operations" icon={<CalendarDays className="size-5" />}>
+            {isLoading ? <LoadingRows /> : (
+              <div className="grid grid-cols-2 gap-3">
+                <PortalMetric label="Unfilled shifts" value={portalOperations?.unfilledShifts ?? 0} />
+                <PortalMetric label="Booking requests" value={portalOperations?.bookingRequests ?? 0} />
+                <PortalMetric label="Applications queue" value={portalOperations?.applications ?? 0} />
+                <PortalMetric label="Cleared candidates" value={clearance?.cleared ?? 0} />
+              </div>
+            )}
+            <ButtonLink to="/shifts" variant="outline" className="mt-4 w-full">Manage shifts and bookings</ButtonLink>
           </DashboardPanel>
 
           <DashboardPanel title="Follow-ups Due" icon={<Clock3 className="size-5" />}>
@@ -339,6 +367,10 @@ function LoadingRows() {
       <Skeleton className="h-14 w-full" />
     </div>
   );
+}
+
+function PortalMetric({ label, value }: { label: string; value: number }) {
+  return <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><p className="text-2xl font-bold">{value}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>;
 }
 
 function MiniRecord({ extra, meta, title, tone }: { extra: string; meta: string; title: string; tone: BadgeTone }) {

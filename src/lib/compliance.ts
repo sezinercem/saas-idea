@@ -151,7 +151,7 @@ export async function uploadComplianceDocument(
 
   const { error: updateError } = await client
     .from("candidate_compliance")
-    .update({ document_id: document.id, status: "Pending Review" })
+    .update({ document_id: document.id, status: "Pending Review", verification_status: "Queued", verification_warnings: [] })
     .eq("id", item.id);
   if (updateError) throw updateError;
 

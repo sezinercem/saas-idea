@@ -97,6 +97,12 @@ export function LoginPage() {
             Start Free Trial
           </Link>
         </p>
+        <p className="mt-3 text-center text-sm text-slate-600 dark:text-slate-300">
+          Candidate invited by an agency?{" "}
+          <Link className="font-semibold text-brand-600 dark:text-brand-100" to="/portal/login">
+            Open Candidate Portal
+          </Link>
+        </p>
       </Card>
     </AuthLayout>
   );

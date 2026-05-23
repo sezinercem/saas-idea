@@ -10,6 +10,7 @@ import type {
   DocumentRecord,
   Note,
 } from "../types/agency";
+import type { CandidateUser, JobApplication, PortalInvite, PortalNotification, Shift, ShiftBooking } from "../types/portal";
 
 type Database = {
   public: {
@@ -34,7 +35,12 @@ type Database = {
       };
       agencies: {
         Row: Agency;
-        Insert: Omit<Agency, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Insert: Omit<Agency, "id" | "created_at" | "logo_url" | "primary_colour"> & {
+          id?: string;
+          created_at?: string | null;
+          logo_url?: string | null;
+          primary_colour?: string;
+        };
         Update: Partial<Omit<Agency, "id" | "created_at">>;
         Relationships: [];
       };
@@ -81,6 +87,9 @@ type Database = {
           rejection_reason?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          verification_status?: CandidateCompliance["verification_status"];
+          verification_warnings?: string[];
+          verified_at?: string | null;
         };
         Update: Partial<Omit<CandidateCompliance, "id" | "agency_id" | "candidate_id" | "created_at">>;
         Relationships: [
@@ -140,9 +149,71 @@ type Database = {
           },
         ];
       };
+      candidate_users: {
+        Row: CandidateUser;
+        Insert: Omit<CandidateUser, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<CandidateUser, "id" | "candidate_id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      portal_invites: {
+        Row: PortalInvite;
+        Insert: Omit<PortalInvite, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<PortalInvite, "id" | "agency_id" | "candidate_id" | "created_at">>;
+        Relationships: [];
+      };
+      shifts: {
+        Row: Shift;
+        Insert: Omit<Shift, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<Shift, "id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      job_applications: {
+        Row: JobApplication;
+        Insert: Omit<JobApplication, "id" | "applied_at" | "jobs" | "candidates"> & { id?: string; applied_at?: string | null };
+        Update: Partial<Omit<JobApplication, "id" | "candidate_id" | "agency_id" | "job_id" | "applied_at" | "jobs" | "candidates">>;
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey";
+            columns: ["job_id"];
+            isOneToOne: false;
+            referencedRelation: "jobs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shift_bookings: {
+        Row: ShiftBooking;
+        Insert: Omit<ShiftBooking, "id" | "booked_at" | "shifts" | "candidates"> & { id?: string; booked_at?: string | null };
+        Update: Partial<Omit<ShiftBooking, "id" | "candidate_id" | "agency_id" | "shift_id" | "booked_at" | "shifts" | "candidates">>;
+        Relationships: [
+          {
+            foreignKeyName: "shift_bookings_shift_id_fkey";
+            columns: ["shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      notifications: {
+        Row: PortalNotification;
+        Insert: Omit<PortalNotification, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<PortalNotification, "id" | "agency_id" | "recipient_user_id" | "recipient_candidate_user_id" | "created_at">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_portal_invite: {
+        Args: { target_candidate_id: string; invite_token_hash: string; invite_expires_at: string };
+        Returns: string;
+      };
+      portal_invite_preview: {
+        Args: { raw_token: string };
+        Returns: Array<{ agency_name: string; candidate_first_name: string | null; primary_colour: string; logo_url: string | null; expires_at: string }>;
+      };
+      accept_portal_invite: { Args: { raw_token: string }; Returns: string };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

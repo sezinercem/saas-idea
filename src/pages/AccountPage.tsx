@@ -4,16 +4,23 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
+import { useAgency } from "../hooks/useAgency";
+import { updateAgencyBranding } from "../lib/agency";
 
 export function AccountPage() {
   const { isConfigured, profile, updateProfile, user } = useAuth();
+  const { agency, refreshAgency } = useAgency();
   const [fullName, setFullName] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [primaryColour, setPrimaryColour] = useState<string | null>(null);
   const resolvedFullName = fullName ?? profile?.full_name ?? "";
   const resolvedCompanyName = companyName ?? profile?.company_name ?? "";
+  const resolvedLogoUrl = logoUrl ?? agency?.logo_url ?? "";
+  const resolvedPrimaryColour = primaryColour ?? agency?.primary_colour ?? "#1d4ed8";
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -26,6 +33,23 @@ export function AccountPage() {
       setMessage("Profile saved.");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to save profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleBrandingSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!agency) return;
+    setError("");
+    setMessage("");
+    setIsSaving(true);
+    try {
+      await updateAgencyBranding(agency.id, { logo_url: resolvedLogoUrl, primary_colour: resolvedPrimaryColour });
+      await refreshAgency();
+      setMessage("Candidate portal branding saved.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Unable to save branding.");
     } finally {
       setIsSaving(false);
     }
@@ -74,6 +98,20 @@ export function AccountPage() {
             <Button type="submit" disabled={!isConfigured || isSaving}>
               {isSaving ? "Saving..." : "Save changes"}
             </Button>
+          </form>
+        </Card>
+        <Card className="mt-6">
+          <h2 className="text-lg font-semibold">Candidate portal branding</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Candidates see this agency identity when viewing school opportunities and clearance.</p>
+          <form className="mt-5 space-y-4" onSubmit={handleBrandingSubmit}>
+            <Input label="Logo URL" value={resolvedLogoUrl} placeholder="https://..." onChange={(event) => setLogoUrl(event.target.value)} />
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <Input label="Primary colour" value={resolvedPrimaryColour} placeholder="#1d4ed8" onChange={(event) => setPrimaryColour(event.target.value)} />
+              </div>
+              <span className="mb-1 size-10 rounded-lg border border-slate-200" style={{ backgroundColor: resolvedPrimaryColour }} />
+            </div>
+            <Button type="submit" disabled={!agency || isSaving}>{isSaving ? "Saving..." : "Save portal branding"}</Button>
           </form>
         </Card>
       </section>

@@ -20,6 +20,17 @@ export const jobSchema = z.object({
   pay_rate: z.string(),
   status: z.enum(["Draft", "Open", "Interviewing", "Filled", "Closed"]),
   notes: z.string(),
+  job_type: z.enum(["Permanent", "Long-Term", "Daily Supply", "Short-Term"]),
+  start_date: z.string(),
+  end_date: z.string(),
+  school_name: z.string(),
+  subject: z.string(),
+  year_group: z.string(),
+  daily_rate: z.string(),
+  shift_date: z.string(),
+  vacancies: z.number().int().min(0),
+  compliance_required: z.boolean(),
+  published: z.boolean(),
 });
 
 export const noteSchema = z.object({

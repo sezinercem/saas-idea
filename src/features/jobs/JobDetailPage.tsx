@@ -1,4 +1,4 @@
-import { ArrowLeft, BriefcaseBusiness, Building2, MapPin, WalletCards } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, Building2, CalendarDays, MapPin, WalletCards } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Select } from "../../components/forms/Select";
@@ -98,9 +98,14 @@ export function JobDetailPage() {
           </div>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <InfoTile icon={Building2} label="Company" value={job.company_name || "No company"} />
+            <InfoTile icon={Building2} label="School" value={job.school_name || job.company_name || "No school"} />
             <InfoTile icon={MapPin} label="Location" value={job.location || "No location"} />
-            <InfoTile icon={WalletCards} label="Pay rate" value={job.pay_rate || "No pay rate"} />
+            <InfoTile icon={WalletCards} label="Daily rate" value={job.daily_rate || job.pay_rate || "No rate"} />
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <InfoTile icon={CalendarDays} label="Type" value={job.job_type} />
+            <InfoTile icon={CalendarDays} label="Start date" value={formatDate(job.start_date || job.shift_date)} />
+            <InfoTile icon={BriefcaseBusiness} label="Portal visibility" value={job.published ? "Published" : "Internal only"} />
           </div>
         </Card>
 

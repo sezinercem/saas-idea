@@ -7,6 +7,8 @@ export type Agency = {
   recruitment_niche: string | null;
   team_size: string | null;
   onboarding_complete: boolean;
+  logo_url: string | null;
+  primary_colour: string;
   created_at: string | null;
 };
 
@@ -85,6 +87,9 @@ export type CandidateCompliance = {
   reviewed_at: string | null;
   reviewer_notes: string | null;
   rejection_reason: string | null;
+  verification_status: "Not Started" | "Queued" | "Checking" | "Needs Review" | "Verified" | "Warning";
+  verification_warnings: string[];
+  verified_at: string | null;
   created_at: string | null;
   updated_at: string | null;
 };

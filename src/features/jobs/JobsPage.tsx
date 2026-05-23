@@ -82,8 +82,8 @@ export function JobsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Jobs</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Job management</h1>
-          <p className="mt-3 text-slate-600 dark:text-slate-300">Manage roles that candidates can be placed into.</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">School opportunities</h1>
+          <p className="mt-3 text-slate-600 dark:text-slate-300">Publish permanent, long-term and supply roles to cleared candidates.</p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="size-4" />
@@ -123,12 +123,12 @@ export function JobsPage() {
                     <Link className="text-lg font-semibold text-slate-950 hover:text-brand-600 dark:text-white" to={`/jobs/${job.id}`}>
                       {job.job_title || "Untitled role"}
                     </Link>
-                    <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">{job.company_name || "No company"}</p>
+                    <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">{job.school_name || job.company_name || "No school"}</p>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      {job.location || "No location"} · {job.pay_rate || "No pay rate"}
+                      {job.location || "No location"} · {job.daily_rate || job.pay_rate || "No rate"} · {job.job_type}
                     </p>
                   </div>
-                  <Badge tone={statusTone(job.status)}>{job.status || "Active"}</Badge>
+                  <div className="flex flex-col gap-2"><Badge tone={statusTone(job.status)}>{job.status || "Open"}</Badge><Badge tone={job.published ? "green" : "slate"}>{job.published ? "Published" : "Internal"}</Badge></div>
                 </div>
                 <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4 dark:border-slate-800">
                   <p className="text-sm text-slate-500 dark:text-slate-400">Created {formatDate(job.created_at)}</p>
@@ -151,7 +151,7 @@ export function JobsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={selectedJob ? "Edit job" : "Add job"}
-        description="Create a role that can later be linked to a placement."
+        description="Create an education role and optionally publish it to cleared portal candidates."
         size="lg"
       >
         <JobForm job={selectedJob} onCancel={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
