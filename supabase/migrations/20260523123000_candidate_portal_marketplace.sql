@@ -285,7 +285,7 @@ as $$
   from public.portal_invites i
   join public.agencies a on a.id = i.agency_id
   join public.candidates c on c.id = i.candidate_id
-  where i.token_hash = encode(digest(raw_token, 'sha256'), 'hex')
+  where i.token_hash = encode(extensions.digest(raw_token, 'sha256'), 'hex')
     and i.used_at is null
     and i.expires_at > now()
   limit 1
@@ -307,7 +307,7 @@ begin
   end if;
   select * into invitation
   from public.portal_invites
-  where token_hash = encode(digest(raw_token, 'sha256'), 'hex')
+  where token_hash = encode(extensions.digest(raw_token, 'sha256'), 'hex')
     and used_at is null
     and expires_at > now()
   for update;

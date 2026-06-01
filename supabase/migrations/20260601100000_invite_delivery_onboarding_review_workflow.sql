@@ -189,6 +189,6 @@ as $$
   from public.portal_invites i
   join public.agencies a on a.id = i.agency_id
   join public.candidates c on c.id = i.candidate_id
-  where i.token_hash = encode(digest(raw_token, 'sha256'), 'hex')
+  where i.token_hash = encode(extensions.digest(raw_token, 'sha256'), 'hex')
   limit 1;
 $$;
