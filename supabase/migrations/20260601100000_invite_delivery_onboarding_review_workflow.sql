@@ -163,7 +163,9 @@ begin
 end;
 $$;
 
-create or replace function public.portal_invite_preview(raw_token text)
+drop function if exists public.portal_invite_preview(text);
+
+create function public.portal_invite_preview(raw_token text)
 returns table (
   agency_name text,
   candidate_first_name text,
