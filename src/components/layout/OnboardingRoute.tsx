@@ -4,7 +4,7 @@ import { useAgency } from "../../hooks/useAgency";
 import { usePortal } from "../../hooks/usePortal";
 
 export function OnboardingRoute({ children }: { children: ReactNode }) {
-  const { agency, isAgencyLoading } = useAgency();
+  const { isAgencyLoading } = useAgency();
   const { session, isPortalLoading } = usePortal();
 
   if (isAgencyLoading || isPortalLoading) {
@@ -17,10 +17,6 @@ export function OnboardingRoute({ children }: { children: ReactNode }) {
 
   if (session) {
     return <Navigate to="/portal" replace />;
-  }
-
-  if (!agency?.onboarding_complete) {
-    return <Navigate to="/onboarding" replace />;
   }
 
   return children;

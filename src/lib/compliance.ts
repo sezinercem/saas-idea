@@ -158,6 +158,20 @@ export async function uploadComplianceDocument(
   await createActivityLog(agencyId, userId, "candidate", candidateId, "compliance.document_uploaded", {
     compliance_type: item.compliance_types?.name,
   });
+  await triggerComplianceVerification(item.id, {
+    fileName: file.name,
+    filePath: path,
+    complianceType: item.compliance_types?.name ?? "Clearance document",
+  });
+}
+
+async function triggerComplianceVerification(itemId: string, body: { fileName: string; filePath: string; complianceType: string }) {
+  const { error } = await getClient().functions.invoke("verify-compliance-document", {
+    body: { itemId, ...body },
+  });
+  if (error) {
+    await createActivityLog(null, null, "compliance", itemId, "compliance.verification_unavailable", { reason: error.message });
+  }
 }
 
 export async function reviewComplianceItem(

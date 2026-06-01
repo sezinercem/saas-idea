@@ -54,6 +54,9 @@ export function PortalLoginPage() {
           <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
           <Button className="w-full" type="submit" disabled={isSaving}>{isSaving ? "Signing in..." : "Log in"}</Button>
         </form>
+        <Link className="mt-4 block text-center text-sm font-semibold text-brand-600 dark:text-brand-100" to="/portal/forgot-password">
+          Forgot password?
+        </Link>
         <p className="mt-5 text-center text-sm text-slate-500">Need access? Your agency must invite you first.</p>
       </Card>
     </main>

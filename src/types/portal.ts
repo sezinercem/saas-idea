@@ -29,6 +29,9 @@ export type PortalInvite = {
   invited_by: string | null;
   agency_id: string;
   candidate_id: string;
+  email_sent_at: string | null;
+  email_delivery_status: "Pending" | "Sent" | "Failed" | "Skipped";
+  email_error: string | null;
   created_at: string;
 };
 

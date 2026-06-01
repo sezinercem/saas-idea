@@ -1,14 +1,18 @@
 import { z } from "zod";
 import { supabase } from "./supabase";
-import type { Agency, AgencyMemberWithProfile, AgencyRole } from "../types/agency";
+import type { Agency, AgencyMemberWithProfile, AgencyRole, OnboardingStep } from "../types/agency";
 
 export const onboardingSchema = z.object({
   name: z.string().min(2, "Agency name is required."),
-  recruitment_niche: z.string().min(2, "Recruitment niche is required."),
-  team_size: z.string().min(1, "Team size is required."),
+  recruitment_niche: z.string().optional(),
+  team_size: z.string().optional(),
 });
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>;
+export type OnboardingProgressInput = Partial<OnboardingInput> & {
+  onboarding_step?: OnboardingStep;
+  onboarding_completed?: boolean;
+};
 
 function getClient() {
   if (!supabase) throw new Error("Supabase is not configured.");
@@ -38,11 +42,41 @@ export async function completeAgencyOnboarding(agencyId: string, input: Onboardi
   const parsed = onboardingSchema.parse(input);
   const { data, error } = await getClient()
     .from("agencies")
-    .update({ ...parsed, onboarding_complete: true, slug: slugify(parsed.name, agencyId) })
+    .update({
+      ...parsed,
+      recruitment_niche: parsed.recruitment_niche || null,
+      team_size: parsed.team_size || null,
+      onboarding_complete: true,
+      onboarding_completed: true,
+      onboarding_step: "Completed",
+      onboarding_completed_at: new Date().toISOString(),
+      slug: slugify(parsed.name, agencyId),
+    })
     .eq("id", agencyId)
     .select()
     .single();
 
+  if (error) throw error;
+  return data;
+}
+
+export async function saveAgencyOnboardingProgress(agencyId: string, input: OnboardingProgressInput) {
+  const updates: Partial<Omit<Agency, "id" | "created_at">> = {};
+  if (typeof input.name === "string" && input.name.trim().length >= 2) {
+    updates.name = input.name.trim();
+    updates.slug = slugify(input.name, agencyId);
+  }
+  if (typeof input.recruitment_niche === "string") updates.recruitment_niche = input.recruitment_niche.trim() || null;
+  if (typeof input.team_size === "string") updates.team_size = input.team_size || null;
+  if (input.onboarding_step) updates.onboarding_step = input.onboarding_step;
+  if (input.onboarding_completed) {
+    updates.onboarding_complete = true;
+    updates.onboarding_completed = true;
+    updates.onboarding_step = "Completed";
+    updates.onboarding_completed_at = new Date().toISOString();
+  }
+
+  const { data, error } = await getClient().from("agencies").update(updates).eq("id", agencyId).select().single();
   if (error) throw error;
   return data;
 }
@@ -85,7 +119,16 @@ export async function createAgencyForExistingUser(userId: string, email: string)
   const agencyName = `${email.split("@")[0]} Agency`;
   const { data: agency, error: agencyError } = await getClient()
     .from("agencies")
-    .insert({ name: agencyName, slug: slugify(agencyName, userId), recruitment_niche: null, team_size: null, onboarding_complete: false })
+    .insert({
+      name: agencyName,
+      slug: slugify(agencyName, userId),
+      recruitment_niche: null,
+      team_size: null,
+      onboarding_complete: false,
+      onboarding_completed: false,
+      onboarding_step: "Profile Setup",
+      onboarding_completed_at: null,
+    })
     .select()
     .single();
 

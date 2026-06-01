@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   CalendarDays,
   Clock3,
+  ClipboardCheck,
   FileCheck2,
   FileUp,
   Plus,
@@ -30,7 +31,13 @@ import type { CandidateStatus } from "../types/recruitment";
 
 type DashboardMetrics = Awaited<ReturnType<typeof getDashboardMetrics>>;
 type ClearanceDashboard = Awaited<ReturnType<typeof getComplianceDashboard>>;
-type PortalOperations = { unfilledShifts: number; bookingRequests: number; applications: number };
+type PortalOperations = {
+  unfilledShifts: number;
+  bookingRequests: number;
+  applications: number;
+  pendingComplianceReviews: number;
+  complianceBlockers: number;
+};
 
 const summaryCards = [
   {
@@ -93,6 +100,8 @@ export function DashboardPage() {
         unfilledShifts: shifts.filter((shift) => shift.status === "Open" && shift.vacancies > 0).length,
         bookingRequests: bookings.filter((booking) => booking.booking_status === "Pending").length,
         applications: applications.filter((application) => application.status === "Applied").length,
+        pendingComplianceReviews: clearanceData?.pendingItems.length ?? 0,
+        complianceBlockers: clearanceData?.nonCompliant ?? 0,
       });
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load dashboard.", "error");
@@ -122,6 +131,23 @@ export function DashboardPage() {
           Add candidate
         </ButtonLink>
       </div>
+
+      {agency && !agency.onboarding_completed ? (
+        <Card className="mt-6 border-amber-200 bg-amber-50/70 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <ClipboardCheck className="mt-1 size-5 text-amber-600 dark:text-amber-200" />
+              <div>
+                <h2 className="font-semibold text-amber-900 dark:text-amber-100">Onboarding is still in progress</h2>
+                <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+                  You can keep working now and return to {agency.onboarding_step || "Profile Setup"} when you are ready.
+                </p>
+              </div>
+            </div>
+            <ButtonLink to="/onboarding" variant="outline">Continue setup</ButtonLink>
+          </div>
+        </Card>
+      ) : null}
 
       <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => (
@@ -229,7 +255,7 @@ export function DashboardPage() {
                 <CalendarCheck className="size-4" />
                 Create Placement
               </ButtonLink>
-              <ButtonLink to="/compliance" variant="outline" className="justify-start">
+              <ButtonLink to="/compliance/review" variant="outline" className="justify-start">
                 <FileUp className="size-4" />
                 Review Clearance Documents
               </ButtonLink>
@@ -246,7 +272,9 @@ export function DashboardPage() {
                 <PortalMetric label="Unfilled shifts" value={portalOperations?.unfilledShifts ?? 0} />
                 <PortalMetric label="Booking requests" value={portalOperations?.bookingRequests ?? 0} />
                 <PortalMetric label="Applications queue" value={portalOperations?.applications ?? 0} />
-                <PortalMetric label="Cleared candidates" value={clearance?.cleared ?? 0} />
+                <PortalMetric label="Pending reviews" value={portalOperations?.pendingComplianceReviews ?? 0} />
+                <PortalMetric label="Compliance blockers" value={portalOperations?.complianceBlockers ?? 0} />
+                <PortalMetric label="Invite acceptance" value={0} suffix="%" />
               </div>
             )}
             <ButtonLink to="/shifts" variant="outline" className="mt-4 w-full">Manage shifts and bookings</ButtonLink>
@@ -369,8 +397,8 @@ function LoadingRows() {
   );
 }
 
-function PortalMetric({ label, value }: { label: string; value: number }) {
-  return <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><p className="text-2xl font-bold">{value}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>;
+function PortalMetric({ label, suffix = "", value }: { label: string; suffix?: string; value: number }) {
+  return <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><p className="text-2xl font-bold">{value}{suffix}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>;
 }
 
 function MiniRecord({ extra, meta, title, tone }: { extra: string; meta: string; title: string; tone: BadgeTone }) {

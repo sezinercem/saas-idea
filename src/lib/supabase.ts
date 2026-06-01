@@ -35,11 +35,14 @@ type Database = {
       };
       agencies: {
         Row: Agency;
-        Insert: Omit<Agency, "id" | "created_at" | "logo_url" | "primary_colour"> & {
+        Insert: Omit<Agency, "id" | "created_at" | "logo_url" | "primary_colour" | "onboarding_completed" | "onboarding_step" | "onboarding_completed_at"> & {
           id?: string;
           created_at?: string | null;
           logo_url?: string | null;
           primary_colour?: string;
+          onboarding_completed?: boolean;
+          onboarding_step?: Agency["onboarding_step"];
+          onboarding_completed_at?: string | null;
         };
         Update: Partial<Omit<Agency, "id" | "created_at">>;
         Relationships: [];
@@ -208,9 +211,24 @@ type Database = {
         Args: { target_candidate_id: string; invite_token_hash: string; invite_expires_at: string };
         Returns: string;
       };
+      mark_portal_invite_delivery: {
+        Args: { invite_id: string; delivery_status: "Sent" | "Failed" | "Skipped"; delivery_error?: string | null };
+        Returns: void;
+      };
+      mark_compliance_verification: {
+        Args: { target_item_id: string; new_verification_status: CandidateCompliance["verification_status"]; warnings?: string[] };
+        Returns: void;
+      };
       portal_invite_preview: {
         Args: { raw_token: string };
-        Returns: Array<{ agency_name: string; candidate_first_name: string | null; primary_colour: string; logo_url: string | null; expires_at: string }>;
+        Returns: Array<{
+          agency_name: string;
+          candidate_first_name: string | null;
+          primary_colour: string;
+          logo_url: string | null;
+          expires_at: string;
+          invite_state: "Valid" | "Used" | "Expired";
+        }>;
       };
       accept_portal_invite: { Args: { raw_token: string }; Returns: string };
     };

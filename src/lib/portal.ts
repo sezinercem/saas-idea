@@ -5,6 +5,7 @@ import type { Job } from "../types/recruitment";
 import type {
   CandidatePortalSession,
   JobApplication,
+  PortalInvite,
   PortalDashboardData,
   PortalNotification,
   Shift,
@@ -46,16 +47,52 @@ async function hashInviteToken(token: string) {
 }
 
 export async function createCandidatePortalInvite(candidateId: string) {
+  const { data: candidate, error: candidateError } = await getClient().from("candidates").select("first_name,last_name,email").eq("id", candidateId).single();
+  if (candidateError) throw candidateError;
+  if (!candidate.email) throw new Error("Candidate must have an email address before inviting them.");
+
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   const rawToken = [...bytes].map((value) => value.toString(16).padStart(2, "0")).join("");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { error } = await getClient().rpc("create_portal_invite", {
+  const { data: inviteId, error } = await getClient().rpc("create_portal_invite", {
     target_candidate_id: candidateId,
     invite_token_hash: await hashInviteToken(rawToken),
     invite_expires_at: expiresAt,
   });
   if (error) throw error;
-  return { link: `${window.location.origin}/portal/accept?token=${rawToken}`, expiresAt };
+  if (!inviteId) throw new Error("Unable to create candidate portal invite.");
+  const link = `${window.location.origin}/portal/accept?token=${rawToken}`;
+  const delivery = await sendCandidateInviteEmail({
+    inviteId,
+    email: candidate.email,
+    candidateName: [candidate.first_name, candidate.last_name].filter(Boolean).join(" ") || "there",
+    inviteLink: link,
+  });
+  return { inviteId, link, expiresAt, delivery };
+}
+
+export async function listCandidatePortalInvites(candidateId: string) {
+  const { data, error } = await getClient()
+    .from("portal_invites")
+    .select("*")
+    .eq("candidate_id", candidateId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data ?? []) as PortalInvite[];
+}
+
+async function sendCandidateInviteEmail(input: { inviteId: string; email: string; candidateName: string; inviteLink: string }) {
+  const client = getClient();
+  const { data, error } = await client.functions.invoke("send-candidate-invite", { body: input });
+  if (!error) return data as { sent: boolean; skipped?: boolean; message?: string };
+
+  await client.rpc("mark_portal_invite_delivery", {
+    invite_id: input.inviteId,
+    delivery_status: "Failed",
+    delivery_error: error.message,
+  });
+  return { sent: false, message: error.message };
 }
 
 export async function previewPortalInvite(rawToken: string) {
@@ -80,6 +117,18 @@ export async function signUpPortalCandidate(email: string, password: string) {
   });
   if (error) throw error;
   return data.session;
+}
+
+export async function sendPortalPasswordReset(email: string) {
+  const { error } = await getClient().auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/portal/reset-password`,
+  });
+  if (error) throw error;
+}
+
+export async function updatePortalPassword(password: string) {
+  const { error } = await getClient().auth.updateUser({ password });
+  if (error) throw error;
 }
 
 export async function listPortalJobs() {

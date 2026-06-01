@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarClock, Copy, Mail, Phone, Send, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarClock, Copy, Mail, Phone, RefreshCw, Send, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
@@ -18,11 +18,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getCandidateClearance } from "../../lib/compliance";
-import { createCandidatePortalInvite } from "../../lib/portal";
+import { createCandidatePortalInvite, listCandidatePortalInvites } from "../../lib/portal";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
 import { candidateStatuses, statusOptions } from "../../lib/workflow";
 import type { OverallClearanceStatus } from "../../types/agency";
+import type { PortalInvite } from "../../types/portal";
 import type { Candidate, CandidateInput, CandidateStatus, PlacementWithRelations } from "../../types/recruitment";
 
 export function CandidateDetailPage() {
@@ -32,6 +33,7 @@ export function CandidateDetailPage() {
   const { agency, role } = useAgency();
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
+  const [portalInvites, setPortalInvites] = useState<PortalInvite[]>([]);
   const [clearanceStatus, setClearanceStatus] = useState<OverallClearanceStatus>("Non-Compliant");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
@@ -44,20 +46,22 @@ export function CandidateDetailPage() {
 
     setIsLoading(true);
     try {
-      const [candidateRow, placementRows, clearance] = await Promise.all([
+      const [candidateRow, placementRows, clearance, invites] = await Promise.all([
         getCandidate(id),
         listCandidatePlacements(id),
         agency ? getCandidateClearance(agency.id, id) : Promise.resolve(null),
+        canInvite ? listCandidatePortalInvites(id) : Promise.resolve([]),
       ]);
       setCandidate(candidateRow);
       setPlacements(placementRows);
+      setPortalInvites(invites);
       if (clearance) setClearanceStatus(clearance.overallStatus);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load candidate.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [agency, id, notify]);
+  }, [agency, canInvite, id, notify]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -92,7 +96,14 @@ export function CandidateDetailPage() {
       const invite = await createCandidatePortalInvite(candidate.id);
       setInviteLink(invite.link);
       setInviteExpiresAt(invite.expiresAt);
-      notify("Secure candidate portal invitation created.", "success");
+      await loadCandidate();
+      if (invite.delivery.sent) {
+        notify("Candidate portal invitation emailed.", "success");
+      } else if ("skipped" in invite.delivery && invite.delivery.skipped) {
+        notify("Invitation link created. Email delivery is not configured yet.", "info");
+      } else {
+        notify("Invitation link created, but email delivery failed.", "error");
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to create portal invitation.", "error");
     }
@@ -180,6 +191,39 @@ export function CandidateDetailPage() {
           </div>
         </Card>
 
+        {canInvite ? (
+          <Card className="lg:col-span-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Candidate portal access</h2>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Invite, resend, and track candidate portal delivery state.</p>
+              </div>
+              <Button variant="outline" onClick={handleInvite}>
+                <RefreshCw className="size-4" />
+                Resend
+              </Button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {portalInvites.length ? portalInvites.map((invite) => (
+                <div key={invite.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold">{inviteState(invite)}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Expires {formatDate(invite.expires_at)} · Email {invite.email_delivery_status.toLowerCase()}
+                      </p>
+                    </div>
+                    <Badge tone={inviteTone(invite)}>{invite.email_delivery_status}</Badge>
+                  </div>
+                  {invite.email_error ? <p className="mt-2 text-xs text-red-600 dark:text-red-300">{invite.email_error}</p> : null}
+                </div>
+              )) : (
+                <p className="text-sm text-slate-500 dark:text-slate-400">No portal invitations sent yet.</p>
+              )}
+            </div>
+          </Card>
+        ) : null}
+
         <CandidateCompliancePanel candidateId={candidate.id} onStatusChange={loadCandidate} />
 
         <Card className="lg:col-span-5">
@@ -245,6 +289,20 @@ export function CandidateDetailPage() {
       </Modal>
     </div>
   );
+}
+
+function inviteState(invite: PortalInvite) {
+  if (invite.used_at) return "Accepted";
+  if (new Date(invite.expires_at).getTime() <= Date.now()) return "Expired";
+  return "Active invite";
+}
+
+function inviteTone(invite: PortalInvite) {
+  if (invite.used_at) return "green";
+  if (new Date(invite.expires_at).getTime() <= Date.now()) return "amber";
+  if (invite.email_delivery_status === "Failed") return "red";
+  if (invite.email_delivery_status === "Sent") return "green";
+  return "blue";
 }
 
 function InfoTile({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string }) {

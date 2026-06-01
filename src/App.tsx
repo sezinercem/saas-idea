@@ -28,10 +28,19 @@ const PlacementsPage = lazy(() => import("./features/placements/PlacementsPage")
 const ShiftsPage = lazy(() => import("./features/shifts/ShiftsPage").then((module) => ({ default: module.ShiftsPage })));
 const TeamPage = lazy(() => import("./features/team/TeamPage").then((module) => ({ default: module.TeamPage })));
 const CompliancePage = lazy(() => import("./features/compliance/CompliancePage").then((module) => ({ default: module.CompliancePage })));
+const ComplianceReviewPage = lazy(() =>
+  import("./features/compliance/ComplianceReviewPage").then((module) => ({ default: module.ComplianceReviewPage })),
+);
 const FollowUpsPage = lazy(() => import("./features/followups/FollowUpsPage").then((module) => ({ default: module.FollowUpsPage })));
 const ReportsPage = lazy(() => import("./features/reports/ReportsPage").then((module) => ({ default: module.ReportsPage })));
 const PortalAcceptPage = lazy(() => import("./features/portal/PortalAcceptPage").then((module) => ({ default: module.PortalAcceptPage })));
+const PortalForgotPasswordPage = lazy(() =>
+  import("./features/portal/PortalForgotPasswordPage").then((module) => ({ default: module.PortalForgotPasswordPage })),
+);
 const PortalLoginPage = lazy(() => import("./features/portal/PortalLoginPage").then((module) => ({ default: module.PortalLoginPage })));
+const PortalResetPasswordPage = lazy(() =>
+  import("./features/portal/PortalResetPasswordPage").then((module) => ({ default: module.PortalResetPasswordPage })),
+);
 const PortalLayout = lazy(() => import("./features/portal/PortalLayout").then((module) => ({ default: module.PortalLayout })));
 const PortalDashboardPage = lazy(() => import("./features/portal/PortalDashboardPage").then((module) => ({ default: module.PortalDashboardPage })));
 const PortalCompliancePage = lazy(() => import("./features/portal/PortalCompliancePage").then((module) => ({ default: module.PortalCompliancePage })));
@@ -66,6 +75,8 @@ function App() {
                     <Route path="/signup" element={<SignUpPage />} />
                     <Route path="/portal/login" element={<PortalLoginPage />} />
                     <Route path="/portal/accept" element={<PortalAcceptPage />} />
+                    <Route path="/portal/forgot-password" element={<PortalForgotPasswordPage />} />
+                    <Route path="/portal/reset-password" element={<PortalResetPasswordPage />} />
                     <Route
                       element={
                         <PortalRoute>
@@ -116,6 +127,14 @@ function App() {
                       <Route
                         path="/compliance"
                         element={<CompliancePage />}
+                      />
+                      <Route
+                        path="/compliance/review"
+                        element={
+                          <RoleGuard allowed={["owner", "admin", "compliance"]}>
+                            <ComplianceReviewPage />
+                          </RoleGuard>
+                        }
                       />
                       <Route path="/follow-ups" element={<FollowUpsPage />} />
                       <Route path="/reports" element={<ReportsPage />} />

@@ -83,7 +83,7 @@ export function CompliancePage() {
                 detail={item.compliance_types?.name || "Clearance item"}
                 status={effectiveComplianceStatus(item)}
                 date={formatDate(item.updated_at)}
-                href={`/candidates/${candidate.id}`}
+                href="/compliance/review"
               />
             ))
           ) : (

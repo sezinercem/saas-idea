@@ -7,10 +7,15 @@ export type Agency = {
   recruitment_niche: string | null;
   team_size: string | null;
   onboarding_complete: boolean;
+  onboarding_completed: boolean;
+  onboarding_step: OnboardingStep;
+  onboarding_completed_at: string | null;
   logo_url: string | null;
   primary_colour: string;
   created_at: string | null;
 };
+
+export type OnboardingStep = "Profile Setup" | "Agency Setup" | "Preferences" | "Compliance Settings" | "Completed";
 
 export type AgencyMember = {
   id: string;

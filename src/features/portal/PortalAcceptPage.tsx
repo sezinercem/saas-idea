@@ -32,6 +32,8 @@ export function PortalAcceptPage() {
     previewPortalInvite(token)
       .then((result) => {
         if (!result) setError("This invitation is invalid or has expired.");
+        else if (result.invite_state === "Expired") setError("This invitation has expired. Ask your agency to resend it.");
+        else if (result.invite_state === "Used") setError("This invitation has already been used. Log in to your candidate portal.");
         setPreview(result);
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Unable to verify invitation."))
@@ -87,11 +89,11 @@ export function PortalAcceptPage() {
             </p>
             {error ? <Alert className="mt-5" tone="error">{error}</Alert> : null}
             {message ? <Alert className="mt-5" tone="success">{message}</Alert> : null}
-            {preview && user ? (
+            {preview && preview.invite_state === "Valid" && user ? (
               <Button className="mt-6 w-full" disabled={isSaving} onClick={acceptExisting}>
                 {isSaving ? "Activating..." : "Accept invitation"}
               </Button>
-            ) : preview ? (
+            ) : preview && preview.invite_state === "Valid" ? (
               <form className="mt-6 space-y-4" onSubmit={createAccount}>
                 <Input label="Invited email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 <Input label="Create password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
