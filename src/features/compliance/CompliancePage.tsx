@@ -151,25 +151,27 @@ export function CompliancePage() {
         </div>
 
         <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-          <div className="hidden grid-cols-[1.4fr_150px_130px_130px_130px] gap-4 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase text-slate-500 md:grid dark:bg-slate-950 dark:text-slate-400">
+          <div className="hidden grid-cols-[1.2fr_120px_120px_120px_120px_120px] gap-4 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase text-slate-500 md:grid dark:bg-slate-950 dark:text-slate-400">
             <span>Candidate</span>
+            <span>Score</span>
             <span>Clearance</span>
             <span>Missing</span>
-            <span>Expiry risks</span>
-            <span>Last reviewed</span>
+            <span>Pending review</span>
+            <span>Expiring soon</span>
           </div>
           <div className="divide-y divide-slate-200 dark:divide-slate-800">
             {filteredRows.map(({ candidate, clearance }) => (
               <Link
                 key={candidate.id}
                 to={`/candidates/${candidate.id}`}
-                className="grid gap-2 px-4 py-4 transition hover:bg-slate-50 md:grid-cols-[1.4fr_150px_130px_130px_130px] md:gap-4 dark:hover:bg-slate-800/50"
+                className="grid gap-2 px-4 py-4 transition hover:bg-slate-50 md:grid-cols-[1.2fr_120px_120px_120px_120px_120px] md:gap-4 dark:hover:bg-slate-800/50"
               >
                 <span className="font-semibold">{fullName(candidate.first_name, candidate.last_name)}</span>
+                <span className="text-sm font-semibold">{complianceScore(clearance.items)}%</span>
                 <Badge tone={statusTone(clearance.overallStatus)}>{clearance.overallStatus}</Badge>
                 <span className="text-sm text-slate-600 dark:text-slate-300">{clearance.missingCount}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{clearance.items.filter((item) => effectiveComplianceStatus(item) === "Pending Review").length}</span>
                 <span className="text-sm text-slate-600 dark:text-slate-300">{clearance.expiryRiskCount}</span>
-                <span className="text-sm text-slate-500 dark:text-slate-400">{formatDate(clearance.lastReviewedAt)}</span>
               </Link>
             ))}
             {!isLoading && filteredRows.length === 0 ? (
@@ -180,6 +182,13 @@ export function CompliancePage() {
       </Card>
     </div>
   );
+}
+
+function complianceScore(items: DashboardData["rows"][number]["clearance"]["items"]) {
+  const required = items.filter((item) => item.compliance_types?.required !== false);
+  if (!required.length) return 0;
+  const approved = required.filter((item) => effectiveComplianceStatus(item) === "Approved").length;
+  return Math.round((approved / required.length) * 100);
 }
 
 function SummaryCard({

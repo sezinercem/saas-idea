@@ -22,6 +22,7 @@ const CandidateDetailPage = lazy(() =>
   import("./features/candidates/CandidateDetailPage").then((module) => ({ default: module.CandidateDetailPage })),
 );
 const CandidatesPage = lazy(() => import("./features/candidates/CandidatesPage").then((module) => ({ default: module.CandidatesPage })));
+const ApplicationsPage = lazy(() => import("./features/applications/ApplicationsPage").then((module) => ({ default: module.ApplicationsPage })));
 const JobDetailPage = lazy(() => import("./features/jobs/JobDetailPage").then((module) => ({ default: module.JobDetailPage })));
 const JobsPage = lazy(() => import("./features/jobs/JobsPage").then((module) => ({ default: module.JobsPage })));
 const PlacementsPage = lazy(() => import("./features/placements/PlacementsPage").then((module) => ({ default: module.PlacementsPage })));
@@ -113,6 +114,7 @@ function App() {
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/candidates" element={<CandidatesPage />} />
                       <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+                      <Route path="/applications" element={<ApplicationsPage />} />
                       <Route path="/jobs" element={<JobsPage />} />
                       <Route path="/jobs/:id" element={<JobDetailPage />} />
                       <Route path="/placements" element={<PlacementsPage />} />

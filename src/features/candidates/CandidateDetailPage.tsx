@@ -18,12 +18,13 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getCandidateClearance } from "../../lib/compliance";
-import { createCandidatePortalInvite, listCandidatePortalInvites } from "../../lib/portal";
+import { createCandidatePortalInvite, listAgencyApplicationsDetailed, listCandidatePortalInvites } from "../../lib/portal";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
 import { candidateStatuses, statusOptions } from "../../lib/workflow";
 import type { OverallClearanceStatus } from "../../types/agency";
 import type { PortalInvite } from "../../types/portal";
+import type { JobApplication } from "../../types/portal";
 import type { Candidate, CandidateInput, CandidateStatus, PlacementWithRelations } from "../../types/recruitment";
 
 export function CandidateDetailPage() {
@@ -34,6 +35,8 @@ export function CandidateDetailPage() {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [portalInvites, setPortalInvites] = useState<PortalInvite[]>([]);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [activeTab, setActiveTab] = useState("Overview");
   const [clearanceStatus, setClearanceStatus] = useState<OverallClearanceStatus>("Non-Compliant");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
@@ -46,15 +49,17 @@ export function CandidateDetailPage() {
 
     setIsLoading(true);
     try {
-      const [candidateRow, placementRows, clearance, invites] = await Promise.all([
+      const [candidateRow, placementRows, clearance, invites, applicationRows] = await Promise.all([
         getCandidate(id),
         listCandidatePlacements(id),
         agency ? getCandidateClearance(agency.id, id) : Promise.resolve(null),
         canInvite ? listCandidatePortalInvites(id) : Promise.resolve([]),
+        listAgencyApplicationsDetailed(),
       ]);
       setCandidate(candidateRow);
       setPlacements(placementRows);
       setPortalInvites(invites);
+      setApplications(applicationRows.filter((application) => application.candidate_id === id));
       if (clearance) setClearanceStatus(clearance.overallStatus);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load candidate.", "error");
@@ -166,8 +171,22 @@ export function CandidateDetailPage() {
             <InfoTile icon={Phone} label="Phone" value={candidate.phone || "No phone saved"} />
           </div>
         </Card>
+        <div className="lg:col-span-12">
+          <div className="flex gap-2 overflow-x-auto rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+            {["Overview", "Compliance", "Placements", "Applications", "Activity", "Notes"].map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-md px-3 py-2 text-sm font-semibold transition ${activeTab === tab ? "bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <Card className="lg:col-span-5">
+        {activeTab === "Overview" ? <Card className="lg:col-span-5">
           <h2 className="text-lg font-semibold">Recruitment status</h2>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Move candidates through the operating workflow.</p>
           <div className="mt-5">
@@ -178,9 +197,9 @@ export function CandidateDetailPage() {
               onChange={(event) => handleStatusChange(event.target.value as CandidateStatus)}
             />
           </div>
-        </Card>
+        </Card> : null}
 
-        <Card className="lg:col-span-6">
+        {activeTab === "Overview" ? <Card className="lg:col-span-6">
           <div className="flex items-center gap-2">
             <CalendarClock className="size-5 text-brand-600 dark:text-brand-100" />
             <h2 className="text-lg font-semibold">Follow-up information</h2>
@@ -189,9 +208,9 @@ export function CandidateDetailPage() {
             <InfoBlock label="Next follow-up" value={formatDate(candidate.next_follow_up_date)} />
             <InfoBlock label="Reason" value={candidate.follow_up_reason || "No follow-up reason set"} />
           </div>
-        </Card>
+        </Card> : null}
 
-        {canInvite ? (
+        {activeTab === "Overview" && canInvite ? (
           <Card className="lg:col-span-6">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -224,14 +243,14 @@ export function CandidateDetailPage() {
           </Card>
         ) : null}
 
-        <CandidateCompliancePanel candidateId={candidate.id} onStatusChange={loadCandidate} />
+        {activeTab === "Compliance" ? <CandidateCompliancePanel candidateId={candidate.id} onStatusChange={loadCandidate} /> : null}
 
-        <Card className="lg:col-span-5">
+        {activeTab === "Overview" || activeTab === "Notes" ? <Card className="lg:col-span-5">
           <h2 className="text-lg font-semibold">Notes</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">{candidate.notes || "No notes yet."}</p>
-        </Card>
+        </Card> : null}
 
-        <Card className="lg:col-span-7">
+        {activeTab === "Placements" || activeTab === "Overview" ? <Card className="lg:col-span-7">
           <h2 className="text-lg font-semibold">Related placements</h2>
           {placements.length ? (
             <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
@@ -251,19 +270,38 @@ export function CandidateDetailPage() {
           ) : (
             <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No placements linked yet.</p>
           )}
-        </Card>
+        </Card> : null}
 
-        <div className="space-y-6 lg:col-span-6">
+        {activeTab === "Applications" ? (
+          <Card className="lg:col-span-12">
+            <h2 className="text-lg font-semibold">Applications</h2>
+            {applications.length ? (
+              <div className="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+                {applications.map((application) => (
+                  <div key={application.id} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold">{application.jobs?.job_title || application.jobs?.school_name || "School role"}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Applied {formatDate(application.applied_at)}</p>
+                    </div>
+                    <Badge tone={statusTone(application.status)}>{application.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No applications yet.</p>}
+          </Card>
+        ) : null}
+
+        {activeTab === "Notes" ? <div className="space-y-6 lg:col-span-6">
           <NotesPanel entityType="candidate" entityId={candidate.id} />
-        </div>
+        </div> : null}
 
-        <div className="space-y-6 lg:col-span-6">
+        {activeTab === "Overview" ? <div className="space-y-6 lg:col-span-6">
           <DocumentsPanel entityType="candidate" entityId={candidate.id} />
-        </div>
+        </div> : null}
 
-        <div className="lg:col-span-12">
+        {activeTab === "Activity" ? <div className="lg:col-span-12">
           <CandidateActivityTimeline candidateId={candidate.id} />
-        </div>
+        </div> : null}
       </div>
 
       <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit candidate" size="lg">

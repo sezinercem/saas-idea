@@ -18,6 +18,10 @@ A React, TypeScript, Tailwind CSS, and Supabase platform for education recruitme
 - Candidate invite email delivery via Supabase Edge Function, resend support, and invite state tracking
 - Candidate portal password recovery and reset pages
 - Published education jobs, supply shifts, clearance-gated applications, and booking requests
+- Recruiter applications queue with bulk status updates
+- Operational follow-up queue for due, upcoming, overdue, and completed candidate actions
+- Team management with members, pending invitations, roles, resends, and removals
+- Notification centre for unread operational events
 - Candidate portal branding, notifications, and realtime booking/compliance refresh
 - Resumable agency onboarding with progress tracking and no dashboard lockout
 - Protected workspaces for compliance, follow-ups, and reports
@@ -54,6 +58,8 @@ For the candidate portal and school opportunity marketplace, run
 [supabase/migrations/20260523123000_candidate_portal_marketplace.sql](./supabase/migrations/20260523123000_candidate_portal_marketplace.sql).
 For resumable onboarding, invite delivery metadata, and verification workflow RPCs, run
 [supabase/migrations/20260601100000_invite_delivery_onboarding_review_workflow.sql](./supabase/migrations/20260601100000_invite_delivery_onboarding_review_workflow.sql).
+For recruiter operations, team invitations, and profile visibility fixes, run
+[supabase/migrations/20260601230000_recruiter_operations_workflows.sql](./supabase/migrations/20260601230000_recruiter_operations_workflows.sql).
 
 Deploy the Edge Functions after applying the migrations:
 
@@ -112,6 +118,7 @@ src/
 /dashboard
 /candidates
 /candidates/:id
+/applications
 /jobs
 /jobs/:id
 /placements

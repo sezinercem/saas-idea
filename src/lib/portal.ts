@@ -1,7 +1,7 @@
 import { calculateClearance, listCandidateCompliance, uploadComplianceDocument } from "./compliance";
 import { supabase } from "./supabase";
 import type { CandidateComplianceItem } from "../types/agency";
-import type { Job } from "../types/recruitment";
+import type { Candidate, Job } from "../types/recruitment";
 import type {
   CandidatePortalSession,
   JobApplication,
@@ -161,6 +161,17 @@ export async function listPortalNotifications() {
   return (data ?? []) as PortalNotification[];
 }
 
+export async function listAgencyNotifications() {
+  const { data, error } = await getClient().from("notifications").select("*").order("created_at", { ascending: false }).limit(20);
+  if (error) throw error;
+  return (data ?? []) as PortalNotification[];
+}
+
+export async function markNotificationRead(id: string) {
+  const { error } = await getClient().from("notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw error;
+}
+
 export async function getPortalDashboard(session: CandidatePortalSession): Promise<PortalDashboardData> {
   const [items, jobs, shifts, bookings, notifications] = await Promise.all([
     listCandidateCompliance(session.agency.id, session.candidate.id),
@@ -250,6 +261,39 @@ export async function listAgencyApplications() {
   const { data, error } = await getClient().from("job_applications").select("*").order("applied_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as JobApplication[];
+}
+
+export async function listAgencyApplicationsDetailed() {
+  const client = getClient();
+  const { data: applications, error } = await client.from("job_applications").select("*").order("applied_at", { ascending: false });
+  if (error) throw error;
+  const rows = (applications ?? []) as JobApplication[];
+  const candidateIds = [...new Set(rows.map((row) => row.candidate_id))];
+  const jobIds = [...new Set(rows.map((row) => row.job_id))];
+  const [{ data: candidates, error: candidateError }, { data: jobs, error: jobError }] = await Promise.all([
+    candidateIds.length ? client.from("candidates").select("id,first_name,last_name,email,status").in("id", candidateIds) : Promise.resolve({ data: [], error: null }),
+    jobIds.length ? client.from("jobs").select("id,job_title,school_name,company_name,status,job_type,vacancies").in("id", jobIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (candidateError) throw candidateError;
+  if (jobError) throw jobError;
+  const candidatesById = new Map(((candidates ?? []) as Candidate[]).map((candidate) => [candidate.id, candidate]));
+  const jobsById = new Map(((jobs ?? []) as Job[]).map((job) => [job.id, job]));
+  return rows.map((row) => ({
+    ...row,
+    candidates: candidatesById.get(row.candidate_id) ?? null,
+    jobs: jobsById.get(row.job_id) ?? null,
+  }));
+}
+
+export async function updateApplicationStatus(id: string, status: JobApplication["status"]) {
+  const { error } = await getClient().from("job_applications").update({ status }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function bulkUpdateApplications(ids: string[], status: JobApplication["status"]) {
+  if (!ids.length) return;
+  const { error } = await getClient().from("job_applications").update({ status }).in("id", ids);
+  if (error) throw error;
 }
 
 export async function updateBookingStatus(id: string, booking_status: ShiftBooking["booking_status"]) {

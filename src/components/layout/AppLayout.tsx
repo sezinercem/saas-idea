@@ -4,6 +4,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarClock,
+  ClipboardList,
   FileCheck2,
   LayoutDashboard,
   LogOut,
@@ -20,10 +21,12 @@ import { Button } from "../ui/Button";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import { CommandPalette } from "./CommandPalette";
 import { Logo } from "./Logo";
+import { NotificationBell } from "./NotificationBell";
 
 const sidebarItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Candidates", to: "/candidates", icon: UsersRound },
+  { label: "Applications", to: "/applications", icon: ClipboardList },
   { label: "Jobs", to: "/jobs", icon: BriefcaseBusiness },
   { label: "Placements", to: "/placements", icon: CalendarCheck },
   { label: "Shifts", to: "/shifts", icon: CalendarDays },
@@ -94,6 +97,7 @@ export function AppLayout() {
                 <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs dark:bg-slate-800">⌘K</kbd>
               </Button>
               <ThemeToggle />
+              <NotificationBell />
               <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="size-4" />
                 Logout

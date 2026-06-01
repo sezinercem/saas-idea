@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { supabase } from "./supabase";
-import type { Agency, AgencyMemberWithProfile, AgencyRole, OnboardingStep } from "../types/agency";
+import type { Agency, AgencyMemberWithProfile, AgencyRole, OnboardingStep, TeamInvite } from "../types/agency";
 
 export const onboardingSchema = z.object({
   name: z.string().min(2, "Agency name is required."),
@@ -82,20 +82,72 @@ export async function saveAgencyOnboardingProgress(agencyId: string, input: Onbo
 }
 
 export async function listAgencyMembers(agencyId: string) {
-  const { data, error } = await getClient()
+  const client = getClient();
+  const { data: members, error } = await client
     .from("agency_members")
-    .select("*, profiles(email, full_name)")
+    .select("*")
     .eq("agency_id", agencyId)
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as unknown as AgencyMemberWithProfile[];
+  const userIds = (members ?? []).map((member) => member.user_id);
+  const { data: profiles, error: profileError } = userIds.length
+    ? await client.from("profiles").select("id,email,full_name").in("id", userIds)
+    : { data: [], error: null };
+  if (profileError) throw profileError;
+  const profilesById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
+  return (members ?? []).map((member) => ({
+    ...member,
+    profiles: profilesById.get(member.user_id) ?? null,
+  })) as AgencyMemberWithProfile[];
 }
 
 export async function updateAgencyMemberRole(memberId: string, role: AgencyRole) {
   const { data, error } = await getClient().from("agency_members").update({ role }).eq("id", memberId).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function removeAgencyMember(memberId: string) {
+  const { error } = await getClient().from("agency_members").delete().eq("id", memberId);
+  if (error) throw error;
+}
+
+export async function listTeamInvites(agencyId: string) {
+  const { data, error } = await getClient()
+    .from("team_invites")
+    .select("*")
+    .eq("agency_id", agencyId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as TeamInvite[];
+}
+
+export async function createTeamInvite(agencyId: string, email: string, role: Exclude<AgencyRole, "owner">) {
+  const { data, error } = await getClient().rpc("create_team_invite", {
+    target_agency_id: agencyId,
+    target_email: email,
+    target_role: role,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function resendTeamInvite(inviteId: string) {
+  const { data, error } = await getClient()
+    .from("team_invites")
+    .update({ status: "Pending", last_sent_at: new Date().toISOString() })
+    .eq("id", inviteId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as TeamInvite;
+}
+
+export async function revokeTeamInvite(inviteId: string) {
+  const { data, error } = await getClient().from("team_invites").update({ status: "Revoked" }).eq("id", inviteId).select().single();
+  if (error) throw error;
+  return data as TeamInvite;
 }
 
 export async function updateAgencyBranding(agencyId: string, input: { logo_url: string; primary_colour: string }) {

@@ -32,6 +32,19 @@ export type AgencyMemberWithProfile = AgencyMember & {
   } | null;
 };
 
+export type TeamInvite = {
+  id: string;
+  agency_id: string;
+  email: string;
+  role: AgencyRole;
+  status: "Pending" | "Accepted" | "Expired" | "Revoked";
+  invited_by: string | null;
+  invited_at: string | null;
+  expires_at: string | null;
+  last_sent_at: string | null;
+  created_at: string | null;
+};
+
 export type ActivityLog = {
   id: string;
   agency_id: string;

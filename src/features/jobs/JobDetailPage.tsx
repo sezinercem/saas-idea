@@ -10,11 +10,14 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../hooks/useToast";
 import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
+import { getCandidateClearance } from "../../lib/compliance";
 import { formatDate, fullName } from "../../lib/format";
-import { getJob, listJobPlacements, updateJobStatus } from "../../lib/recruitment";
+import { getJob, listCandidates, listJobPlacements, updateJobStatus } from "../../lib/recruitment";
+import { listAgencyApplicationsDetailed } from "../../lib/portal";
 import { statusTone } from "../../lib/status";
 import { jobStatuses, statusOptions } from "../../lib/workflow";
-import type { Job, JobStatus, PlacementWithRelations } from "../../types/recruitment";
+import type { Job, JobStatus, Candidate, PlacementWithRelations } from "../../types/recruitment";
+import type { JobApplication } from "../../types/portal";
 
 export function JobDetailPage() {
   const { id } = useParams();
@@ -23,6 +26,8 @@ export function JobDetailPage() {
   const { agency } = useAgency();
   const [job, setJob] = useState<Job | null>(null);
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [matches, setMatches] = useState<Array<{ candidate: Candidate; score: number; reasons: string[] }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadJob = useCallback(async () => {
@@ -30,15 +35,30 @@ export function JobDetailPage() {
 
     setIsLoading(true);
     try {
-      const [jobRow, placementRows] = await Promise.all([getJob(id), listJobPlacements(id)]);
+      const [jobRow, placementRows, applicationRows, candidates] = await Promise.all([getJob(id), listJobPlacements(id), listAgencyApplicationsDetailed(), listCandidates()]);
       setJob(jobRow);
       setPlacements(placementRows);
+      setApplications(applicationRows.filter((application) => application.job_id === id));
+      if (agency) {
+        const candidateMatches = await Promise.all(
+          candidates.slice(0, 20).map(async (candidate) => {
+            const clearance = await getCandidateClearance(agency.id, candidate.id);
+            const reasons: string[] = [];
+            let score = 0;
+            if (clearance.overallStatus === "Cleared") { score += 50; reasons.push("Cleared"); }
+            if (["New", "Contacted", "Interviewing"].includes(candidate.status ?? "")) { score += 20; reasons.push(candidate.status ?? "Available"); }
+            if (jobRow.job_type === "Daily Supply" && clearance.overallStatus === "Cleared") { score += 15; reasons.push("Supply ready"); }
+            return { candidate, score, reasons };
+          }),
+        );
+        setMatches(candidateMatches.sort((a, b) => b.score - a.score).slice(0, 5));
+      }
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load job.", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [id, notify]);
+  }, [agency, id, notify]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -122,6 +142,13 @@ export function JobDetailPage() {
           </div>
         </Card>
 
+        <div className="grid gap-4 lg:col-span-12 md:grid-cols-4">
+          <Metric label="Applications" value={applications.length} />
+          <Metric label="Placements" value={placements.length} />
+          <Metric label="Vacancies" value={job.vacancies ?? 0} />
+          <Metric label="Candidate matches" value={matches.filter((match) => match.score > 0).length} />
+        </div>
+
         <Card className="lg:col-span-5">
           <h2 className="text-lg font-semibold">Notes</h2>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600 dark:text-slate-300">{job.notes || "No notes yet."}</p>
@@ -148,11 +175,40 @@ export function JobDetailPage() {
           )}
         </Card>
 
+        <Card className="lg:col-span-12">
+          <h2 className="text-lg font-semibold">Recommended Candidates</h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Suggested from clearance, candidate status, and job type fit.</p>
+          {matches.length ? (
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {matches.map(({ candidate, reasons, score }) => (
+                <ButtonLink key={candidate.id} to={`/candidates/${candidate.id}`} variant="outline" className="h-auto justify-between p-4">
+                  <span className="text-left">
+                    <span className="block font-semibold">{fullName(candidate.first_name, candidate.last_name)}</span>
+                    <span className="mt-1 block text-xs text-slate-500">{reasons.length ? reasons.join(" · ") : "Needs review"}</span>
+                  </span>
+                  <Badge tone={score >= 50 ? "green" : score >= 20 ? "amber" : "slate"}>{score}%</Badge>
+                </ButtonLink>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No recommended candidates yet.</p>
+          )}
+        </Card>
+
         <div className="lg:col-span-12">
           <NotesPanel entityType="job" entityId={job.id} />
         </div>
       </div>
     </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <Card className="p-4">
+      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-bold">{value}</p>
+    </Card>
   );
 }
 

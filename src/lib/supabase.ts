@@ -9,6 +9,7 @@ import type {
   ComplianceType,
   DocumentRecord,
   Note,
+  TeamInvite,
 } from "../types/agency";
 import type { CandidateUser, JobApplication, PortalInvite, PortalNotification, Shift, ShiftBooking } from "../types/portal";
 
@@ -51,6 +52,12 @@ type Database = {
         Row: AgencyMember;
         Insert: Omit<AgencyMember, "id" | "created_at"> & { id?: string; created_at?: string | null };
         Update: Partial<Omit<AgencyMember, "id" | "agency_id" | "user_id" | "created_at">>;
+        Relationships: [];
+      };
+      team_invites: {
+        Row: TeamInvite;
+        Insert: Omit<TeamInvite, "id" | "created_at" | "invited_at"> & { id?: string; created_at?: string | null; invited_at?: string | null };
+        Update: Partial<Omit<TeamInvite, "id" | "agency_id" | "created_at">>;
         Relationships: [];
       };
       activity_logs: {
@@ -231,6 +238,7 @@ type Database = {
         }>;
       };
       accept_portal_invite: { Args: { raw_token: string }; Returns: string };
+      create_team_invite: { Args: { target_agency_id: string; target_email: string; target_role: string }; Returns: string };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

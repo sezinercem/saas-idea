@@ -298,6 +298,7 @@ export function DashboardPage() {
             ) : (
               <EmptyState icon={Clock3} title="No follow-ups due" body="Overdue and due-today candidate follow-ups will appear here." />
             )}
+            <ButtonLink to="/follow-ups" variant="outline" className="mt-4 w-full">Open follow-up queue</ButtonLink>
           </DashboardPanel>
 
           <DashboardPanel title="Compliance Watch" icon={<FileCheck2 className="size-5" />}>

@@ -35,6 +35,12 @@ export function ShiftsPage() {
   const [bookings, setBookings] = useState<ShiftBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const openShifts = shifts.filter((shift) => shift.status === "Open");
+  const filledShifts = shifts.filter((shift) => shift.status === "Filled");
+  const cancelledShifts = shifts.filter((shift) => shift.status === "Cancelled" || shift.status === "Closed");
+  const upcomingShifts = shifts.filter((shift) => shift.shift_date >= new Date().toISOString().slice(0, 10));
+  const totalVacancies = shifts.reduce((sum, shift) => sum + shift.vacancies, 0);
+  const utilisation = shifts.length ? Math.round(((bookings.filter((booking) => ["Approved", "Completed"].includes(booking.booking_status)).length) / Math.max(1, bookings.length + totalVacancies)) * 100) : 0;
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +89,13 @@ export function ShiftsPage() {
         <Button onClick={() => setIsOpen(true)}><Plus className="size-4" />Create shift</Button>
       </div>
       <div className="mt-7 grid gap-6 xl:grid-cols-12">
+        <div className="grid gap-4 xl:col-span-12 md:grid-cols-5">
+          <ShiftMetric label="Upcoming" value={upcomingShifts.length} />
+          <ShiftMetric label="Open" value={openShifts.length} />
+          <ShiftMetric label="Filled" value={filledShifts.length} />
+          <ShiftMetric label="Cancelled/closed" value={cancelledShifts.length} />
+          <ShiftMetric label="Vacancy utilisation" value={utilisation} suffix="%" />
+        </div>
         <Card className="xl:col-span-7">
           <h2 className="text-lg font-semibold">Published shifts</h2>
           {isLoading ? <Skeleton className="mt-5 h-40 w-full" /> : shifts.length ? (
@@ -118,6 +131,15 @@ export function ShiftsPage() {
         <ShiftForm onCancel={() => setIsOpen(false)} onSubmit={save} />
       </Modal>
     </div>
+  );
+}
+
+function ShiftMetric({ label, suffix = "", value }: { label: string; suffix?: string; value: number }) {
+  return (
+    <Card className="p-4">
+      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="mt-2 text-2xl font-bold">{value}{suffix}</p>
+    </Card>
   );
 }
 
