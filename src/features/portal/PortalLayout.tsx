@@ -1,4 +1,5 @@
 import { Bell, BriefcaseBusiness, CalendarDays, ClipboardCheck, FileText, Home, LogOut, UserRound } from "lucide-react";
+import type { CSSProperties } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
@@ -22,6 +23,7 @@ export function PortalLayout() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   if (!session) return null;
+  const brandColour = session.agency.primary_colour || "#1d4ed8";
 
   const handleSignOut = async () => {
     await signOut();
@@ -36,7 +38,7 @@ export function PortalLayout() {
             {session.agency.logo_url ? (
               <img alt="" className="size-9 rounded-lg object-cover" src={session.agency.logo_url} />
             ) : (
-              <span className="flex size-9 items-center justify-center rounded-lg text-white" style={{ backgroundColor: session.agency.primary_colour }}>
+              <span className="flex size-9 items-center justify-center rounded-lg text-white" style={{ backgroundColor: brandColour }}>
                 <ClipboardCheck className="size-5" />
               </span>
             )}
@@ -62,9 +64,17 @@ export function PortalLayout() {
               to={to}
               className={({ isActive }) =>
                 cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300",
-                  isActive && "bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-100",
+                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition dark:text-slate-300",
+                  isActive ? "shadow-sm" : "hover:bg-slate-100 dark:hover:bg-slate-900",
                 )
+              }
+              style={({ isActive }) =>
+                isActive
+                  ? ({
+                      backgroundColor: `${brandColour}18`,
+                      color: brandColour,
+                    } satisfies CSSProperties)
+                  : undefined
               }
             >
               <Icon className="size-4" />
@@ -73,7 +83,7 @@ export function PortalLayout() {
           ))}
         </nav>
       </header>
-      <div className="h-1" style={{ backgroundColor: session.agency.primary_colour }} />
+      <div className="h-1" style={{ backgroundColor: brandColour }} />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <Outlet />
       </main>

@@ -1,12 +1,12 @@
-import { BriefcaseBusiness, CheckSquare, Search } from "lucide-react";
+import { BriefcaseBusiness, CheckSquare } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { SearchField } from "../../components/forms/SearchField";
 import { Select } from "../../components/forms/Select";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Input } from "../../components/ui/Input";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useToast } from "../../hooks/useToast";
 import { formatDate, fullName } from "../../lib/format";
@@ -70,10 +70,14 @@ export function ApplicationsPage() {
           <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Applications</h1>
           <p className="mt-3 text-slate-600 dark:text-slate-300">Review candidate applications for school roles and move them through the shortlist workflow.</p>
         </div>
-        <div className="relative w-full sm:w-80">
-          <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-          <Input label="Search applications" className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} />
-        </div>
+        <SearchField
+          containerClassName="w-full sm:w-80"
+          label="Search applications"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onClear={() => setSearch("")}
+          placeholder="Candidate or job"
+        />
       </div>
 
       <Card className="mt-8">

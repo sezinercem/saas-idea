@@ -1,5 +1,6 @@
-import { ExternalLink, Search, ShieldCheck } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SearchField } from "../../components/forms/SearchField";
 import { Textarea } from "../../components/forms/Textarea";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -86,10 +87,14 @@ export function ComplianceReviewPage() {
             Review uploaded DBS, safeguarding, Right to Work and school clearance documents before candidates are placed.
           </p>
         </div>
-        <div className="relative w-full sm:w-80">
-          <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-          <Input label="Search queue" className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} />
-        </div>
+        <SearchField
+          containerClassName="w-full sm:w-80"
+          label="Search queue"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onClear={() => setSearch("")}
+          placeholder="Candidate or document"
+        />
       </div>
 
       <Card className="mt-8">

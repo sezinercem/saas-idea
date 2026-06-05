@@ -1,12 +1,12 @@
-import { AlertTriangle, CheckCircle2, Clock3, FileWarning, Search, ShieldCheck, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, FileWarning, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { SearchField } from "../../components/forms/SearchField";
 import { Select } from "../../components/forms/Select";
 import { Badge } from "../../components/ui/Badge";
 import { ButtonLink } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Input } from "../../components/ui/Input";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { useAgency } from "../../hooks/useAgency";
 import { useToast } from "../../hooks/useToast";
@@ -142,10 +142,13 @@ export function CompliancePage() {
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">School placement readiness across all candidates.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-              <Input label="Search" className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} />
-            </div>
+            <SearchField
+              label="Search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onClear={() => setSearch("")}
+              placeholder="Candidate name"
+            />
             <Select label="Clearance status" options={filters} value={filter} onChange={(event) => setFilter(event.target.value)} />
           </div>
         </div>

@@ -83,6 +83,7 @@ export function PortalAcceptPage() {
         {isLoading ? <Skeleton className="h-44 w-full" /> : (
           <>
             <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-100">Candidate invitation</p>
+            <div className="mt-3 h-1.5 w-20 rounded-full" style={{ backgroundColor: preview?.primary_colour || "#1d4ed8" }} />
             <h1 className="mt-3 text-2xl font-bold">{preview?.agency_name || "Candidate Portal"}</h1>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
               {preview ? `Hello ${preview.candidate_first_name || "there"}, set up your account to complete safer recruitment checks and view school opportunities.` : "Your agency invitation could not be loaded."}
@@ -90,14 +91,14 @@ export function PortalAcceptPage() {
             {error ? <Alert className="mt-5" tone="error">{error}</Alert> : null}
             {message ? <Alert className="mt-5" tone="success">{message}</Alert> : null}
             {preview && preview.invite_state === "Valid" && user ? (
-              <Button className="mt-6 w-full" disabled={isSaving} onClick={acceptExisting}>
+              <Button className="mt-6 w-full" disabled={isSaving} style={{ backgroundColor: preview.primary_colour || "#1d4ed8" }} onClick={acceptExisting}>
                 {isSaving ? "Activating..." : "Accept invitation"}
               </Button>
             ) : preview && preview.invite_state === "Valid" ? (
               <form className="mt-6 space-y-4" onSubmit={createAccount}>
                 <Input label="Invited email address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
                 <Input label="Create password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-                <Button className="w-full" type="submit" disabled={isSaving}>
+                <Button className="w-full" type="submit" disabled={isSaving} style={{ backgroundColor: preview.primary_colour || "#1d4ed8" }}>
                   {isSaving ? "Creating account..." : "Create candidate account"}
                 </Button>
               </form>

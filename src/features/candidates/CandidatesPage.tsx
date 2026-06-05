@@ -1,14 +1,14 @@
-import { Edit3, Plus, Search, Trash2, UserRound } from "lucide-react";
+import { Edit3, Plus, Trash2, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CandidateForm } from "./CandidateForm";
+import { SearchField } from "../../components/forms/SearchField";
 import { Select } from "../../components/forms/Select";
 import { Badge } from "../../components/ui/Badge";
 import { statusTone } from "../../lib/status";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
 import { TableSkeleton } from "../../components/ui/Skeleton";
 import { useAuth } from "../../hooks/useAuth";
@@ -115,16 +115,13 @@ export function CandidatesPage() {
 
       <Card className="mt-8">
         <div className="grid gap-4 md:grid-cols-[1fr_240px]">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-            <Input
-              label="Search candidates"
-              className="pl-10"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Name, email, DBS or clearance status"
-            />
-          </div>
+          <SearchField
+            label="Search candidates"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            onClear={() => setSearch("")}
+            placeholder="Name, email, DBS or clearance status"
+          />
           <Select label="Compliance filter" options={complianceFilters} value={complianceFilter} onChange={(event) => setComplianceFilter(event.target.value)} />
         </div>
       </Card>

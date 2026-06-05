@@ -1,13 +1,13 @@
-import { BriefcaseBusiness, Edit3, Plus, Search, Trash2 } from "lucide-react";
+import { BriefcaseBusiness, Edit3, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { JobForm } from "./JobForm";
+import { SearchField } from "../../components/forms/SearchField";
 import { Badge } from "../../components/ui/Badge";
 import { statusTone } from "../../lib/status";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
 import { TableSkeleton } from "../../components/ui/Skeleton";
 import { useAuth } from "../../hooks/useAuth";
@@ -92,16 +92,14 @@ export function JobsPage() {
       </div>
 
       <Card className="mt-8">
-        <div className="relative max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-slate-400" />
-          <Input
-            label="Search jobs"
-            className="pl-10"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Company, title, location, status"
-          />
-        </div>
+        <SearchField
+          containerClassName="max-w-md"
+          label="Search jobs"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onClear={() => setSearch("")}
+          placeholder="Company, title, location, status"
+        />
       </Card>
 
       <div className="mt-6">
