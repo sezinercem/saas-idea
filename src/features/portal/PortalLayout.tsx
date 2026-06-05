@@ -1,10 +1,10 @@
 import { Bell, BriefcaseBusiness, CalendarDays, ClipboardCheck, FileText, Home, LogOut, UserRound } from "lucide-react";
-import type { CSSProperties } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { ThemeToggle } from "../../components/ui/ThemeToggle";
 import { useAuth } from "../../hooks/useAuth";
 import { usePortal } from "../../hooks/usePortal";
+import { brandStyleVars } from "../../lib/brand";
 import { cn } from "../../lib/utils";
 
 const navigation = [
@@ -31,7 +31,7 @@ export function PortalLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white" style={brandStyleVars(brandColour)}>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -70,10 +70,10 @@ export function PortalLayout() {
               }
               style={({ isActive }) =>
                 isActive
-                  ? ({
+                  ? {
                       backgroundColor: `${brandColour}18`,
                       color: brandColour,
-                    } satisfies CSSProperties)
+                    }
                   : undefined
               }
             >

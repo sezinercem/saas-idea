@@ -16,6 +16,8 @@ import {
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useAgency } from "../../hooks/useAgency";
+import { brandStyleVars } from "../../lib/brand";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { ThemeToggle } from "../ui/ThemeToggle";
@@ -39,6 +41,7 @@ const sidebarItems = [
 
 export function AppLayout() {
   const { signOut, user } = useAuth();
+  const { agency } = useAgency();
   const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -48,7 +51,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white" style={brandStyleVars(agency?.primary_colour)}>
       <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white px-5 py-6 lg:block dark:border-slate-800 dark:bg-slate-900">
         <Logo />
         <nav className="mt-8 space-y-2">

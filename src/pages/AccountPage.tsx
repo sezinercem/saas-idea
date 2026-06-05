@@ -6,12 +6,9 @@ import { Input } from "../components/ui/Input";
 import { useAuth } from "../hooks/useAuth";
 import { useAgency } from "../hooks/useAgency";
 import { updateAgencyBranding } from "../lib/agency";
+import { isHexColour } from "../lib/brand";
 
 const portalColourPresets = ["#1d4ed8", "#2563eb", "#7c3aed", "#0f766e", "#16a34a", "#f59e0b", "#ef4444", "#e11d48"];
-
-function isHexColour(value: string) {
-  return /^#[0-9a-fA-F]{6}$/.test(value);
-}
 
 export function AccountPage() {
   const { isConfigured, profile, updateProfile, user } = useAuth();
