@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Building2, GraduationCap, UsersRound } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthLayout } from "../components/layout/AuthLayout";
 import { Alert } from "../components/ui/Alert";
@@ -44,6 +45,28 @@ export function LoginPage() {
   return (
     <AuthLayout>
       <Card className="w-full">
+        <div className="mb-6 grid gap-3">
+          <PortalChoice
+            icon={UsersRound}
+            title="Recruiter workspace"
+            body="Agency owners, admins, recruiters, and compliance teams."
+            to="/login"
+            active
+          />
+          <PortalChoice
+            icon={Building2}
+            title="School portal"
+            body="School users sign in or accept an agency-issued invite."
+            to="/school/login"
+          />
+          <PortalChoice
+            icon={GraduationCap}
+            title="Candidate portal"
+            body="Candidates use an agency invite or access code to see only their agency's jobs and compliance."
+            to="/portal/login"
+          />
+        </div>
+
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Log in to your workspace</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -105,5 +128,38 @@ export function LoginPage() {
         </p>
       </Card>
     </AuthLayout>
+  );
+}
+
+function PortalChoice({
+  active,
+  body,
+  icon: Icon,
+  title,
+  to,
+}: {
+  active?: boolean;
+  body: string;
+  icon: typeof UsersRound;
+  title: string;
+  to: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className={`flex items-start gap-3 rounded-lg border p-3 transition ${
+        active
+          ? "border-brand-200 bg-brand-50 text-brand-900 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-100"
+          : "border-slate-200 hover:border-brand-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:border-brand-500/30 dark:hover:bg-slate-900"
+      }`}
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-brand-600 dark:bg-slate-950 dark:text-brand-100">
+        <Icon className="size-5" />
+      </span>
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-600 dark:text-slate-400">{body}</span>
+      </span>
+    </Link>
   );
 }

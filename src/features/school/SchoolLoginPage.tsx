@@ -11,6 +11,7 @@ export function SchoolLoginPage() {
   const navigate = useNavigate();
   const { refreshSchoolPortal } = useSchoolPortal();
   const [email, setEmail] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -30,12 +31,36 @@ export function SchoolLoginPage() {
     }
   };
 
+  const openInvite = () => {
+    const token = extractInviteToken(inviteCode);
+    if (!token) {
+      setError("Paste your school invite link or secure invite code.");
+      return;
+    }
+    navigate(`/school/accept-invite?token=${encodeURIComponent(token)}`);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 dark:bg-slate-950 dark:text-white">
       <Card className="mx-auto mt-12 max-w-md">
         <p className="text-sm font-semibold uppercase text-brand-600 dark:text-brand-100">School access</p>
         <h1 className="mt-3 text-2xl font-bold">Sign in to your school portal</h1>
         <p className="mt-2 text-sm text-slate-500">Request cover, approve timesheets, and view invoices.</p>
+        <div className="mt-6 rounded-lg border border-brand-200 bg-brand-50 p-4 dark:border-brand-500/30 dark:bg-brand-500/10">
+          <h2 className="text-sm font-semibold text-brand-800 dark:text-brand-100">Have a school invite?</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
+            Schools cannot self-sign up. Paste the invite link or code your agency sent you.
+          </p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Input
+              label="Invite link or code"
+              placeholder="Paste invite link or code"
+              value={inviteCode}
+              onChange={(event) => setInviteCode(event.target.value)}
+            />
+            <Button className="sm:w-32" onClick={openInvite}>Continue</Button>
+          </div>
+        </div>
         {error ? <Alert className="mt-5" tone="error">{error}</Alert> : null}
         <form className="mt-6 space-y-4" onSubmit={submit}>
           <Input label="Email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
@@ -48,4 +73,15 @@ export function SchoolLoginPage() {
       </Card>
     </main>
   );
+}
+
+function extractInviteToken(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  try {
+    const url = new URL(trimmed);
+    return url.searchParams.get("token") || trimmed;
+  } catch {
+    return trimmed;
+  }
 }

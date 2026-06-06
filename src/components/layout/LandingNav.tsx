@@ -30,7 +30,7 @@ export function LandingNav() {
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
-          <ButtonLink to="/#login-options" variant="ghost">
+          <ButtonLink to="/login" variant="ghost">
             Login
           </ButtonLink>
           <ButtonLink to="/signup">Start Free Trial</ButtonLink>
@@ -59,7 +59,7 @@ export function LandingNav() {
             ))}
             <div className="flex items-center gap-3 pt-2">
               <ThemeToggle />
-              <ButtonLink to="/#login-options" variant="outline" className="flex-1">
+              <ButtonLink to="/login" variant="outline" className="flex-1">
                 Login
               </ButtonLink>
               <ButtonLink to="/signup" className="flex-1">

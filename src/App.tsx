@@ -33,6 +33,7 @@ const JobDetailPage = lazy(() => import("./features/jobs/JobDetailPage").then((m
 const JobsPage = lazy(() => import("./features/jobs/JobsPage").then((module) => ({ default: module.JobsPage })));
 const PayrollPage = lazy(() => import("./features/payroll/PayrollPage").then((module) => ({ default: module.PayrollPage })));
 const PlacementsPage = lazy(() => import("./features/placements/PlacementsPage").then((module) => ({ default: module.PlacementsPage })));
+const SchoolsPage = lazy(() => import("./features/schools/SchoolsPage").then((module) => ({ default: module.SchoolsPage })));
 const ShiftsPage = lazy(() => import("./features/shifts/ShiftsPage").then((module) => ({ default: module.ShiftsPage })));
 const TimesheetsPage = lazy(() => import("./features/timesheets/TimesheetsPage").then((module) => ({ default: module.TimesheetsPage })));
 const TeamPage = lazy(() => import("./features/team/TeamPage").then((module) => ({ default: module.TeamPage })));
@@ -156,6 +157,7 @@ function App() {
                       <Route path="/candidates/:id" element={<CandidateDetailPage />} />
                       <Route path="/availability" element={<AvailabilityPage />} />
                       <Route path="/applications" element={<ApplicationsPage />} />
+                      <Route path="/schools" element={<SchoolsPage />} />
                       <Route path="/booking-requests" element={<BookingRequestsPage />} />
                       <Route path="/bookings" element={<BookingsPage />} />
                       <Route path="/jobs" element={<JobsPage />} />

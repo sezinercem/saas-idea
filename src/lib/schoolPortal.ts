@@ -5,8 +5,11 @@ import type {
   SchoolCandidateProfile,
   SchoolContact,
   SchoolContactInput,
+  School,
+  SchoolInvite,
   SchoolPortalSession,
   SchoolBookingRequestInput,
+  SchoolUser,
   Timesheet,
 } from "../types/operations";
 
@@ -93,6 +96,45 @@ export async function createSchoolInvite(schoolId: string, email: string, role: 
   });
   if (error) throw error;
   return { inviteId: data, link: `${window.location.origin}/school/accept-invite?token=${rawToken}`, expiresAt: expiresAt.toISOString() };
+}
+
+export async function listAgencySchools(agencyId: string) {
+  const { data, error } = await getClient().from("schools").select("*").eq("agency_id", agencyId).order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as School[];
+}
+
+export async function createAgencySchool(
+  agencyId: string,
+  input: Pick<School, "name" | "location" | "contact_name" | "contact_email">,
+) {
+  const { data, error } = await getClient()
+    .from("schools")
+    .insert({ ...input, agency_id: agencyId })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as School;
+}
+
+export async function listAgencySchoolInvites(agencyId: string) {
+  const { data, error } = await getClient()
+    .from("school_invites")
+    .select("*")
+    .eq("agency_id", agencyId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SchoolInvite[];
+}
+
+export async function listAgencySchoolUsers(agencyId: string) {
+  const { data, error } = await getClient()
+    .from("school_users")
+    .select("*")
+    .eq("agency_id", agencyId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SchoolUser[];
 }
 
 export async function listSchoolBookingRequests(session: SchoolPortalSession) {
