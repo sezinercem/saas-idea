@@ -32,6 +32,7 @@ export function SchoolsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [inviteSchool, setInviteSchool] = useState<School | null>(null);
+  const [inviteDefaults, setInviteDefaults] = useState<{ email: string; role: SchoolUserRole }>({ email: "", role: "Cover Manager" });
   const [createdInviteLink, setCreatedInviteLink] = useState("");
   const canManage = role === "owner" || role === "admin" || role === "recruiter";
 
@@ -79,6 +80,7 @@ export function SchoolsPage() {
     const school = await createAgencySchool(agency.id, input);
     setIsSchoolModalOpen(false);
     setInviteSchool(school);
+    setInviteDefaults({ email: school.contact_email ?? "", role: "Cover Manager" });
     await loadSchools();
     notify("School added. You can now invite their portal user.", "success");
   };
@@ -91,9 +93,18 @@ export function SchoolsPage() {
     notify("School invite created. Send the link to the school contact.", "success");
   };
 
-  const copyInviteLink = async () => {
-    await navigator.clipboard.writeText(createdInviteLink);
-    notify("Invite link copied.", "success");
+  const copyText = async (value: string, message: string) => {
+    await navigator.clipboard.writeText(value);
+    notify(message, "success");
+  };
+
+  const openInviteModal = (school: School, defaults?: Partial<{ email: string; role: SchoolUserRole }>) => {
+    setInviteSchool(school);
+    setInviteDefaults({
+      email: defaults?.email ?? school.contact_email ?? "",
+      role: defaults?.role ?? "Cover Manager",
+    });
+    setCreatedInviteLink("");
   };
 
   return (
@@ -146,7 +157,7 @@ export function SchoolsPage() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Button disabled={!canManage} onClick={() => setInviteSchool(school)}>
+                  <Button disabled={!canManage} onClick={() => openInviteModal(school)}>
                     <MailPlus className="size-4" />
                     Invite school user
                   </Button>
@@ -182,9 +193,25 @@ export function SchoolsPage() {
                   {schoolName(invite.school_id, schools)} · {invite.role} · Expires {formatDate(invite.expires_at)}
                 </p>
               </div>
-              <Badge tone={invite.used_at ? "green" : new Date(invite.expires_at) < new Date() ? "red" : "blue"}>
-                {invite.used_at ? "Used" : new Date(invite.expires_at) < new Date() ? "Expired" : "Pending"}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={invite.used_at ? "green" : new Date(invite.expires_at) < new Date() ? "red" : "blue"}>
+                  {invite.used_at ? "Used" : new Date(invite.expires_at) < new Date() ? "Expired" : "Pending"}
+                </Badge>
+                {!invite.used_at ? (
+                  <Button
+                    variant="outline"
+                    className="h-9 px-3"
+                    disabled={!canManage}
+                    onClick={() => {
+                      const school = schools.find((row) => row.id === invite.school_id);
+                      if (school) openInviteModal(school, { email: invite.email, role: invite.role });
+                    }}
+                  >
+                    <MailPlus className="size-4" />
+                    New link
+                  </Button>
+                ) : null}
+              </div>
             </div>
           ))}
           {!invites.length ? <p className="text-sm text-slate-500 dark:text-slate-400">No school portal invites have been created yet.</p> : null}
@@ -199,6 +226,7 @@ export function SchoolsPage() {
         isOpen={Boolean(inviteSchool)}
         onClose={() => {
           setInviteSchool(null);
+          setInviteDefaults({ email: "", role: "Cover Manager" });
           setCreatedInviteLink("");
         }}
         title={createdInviteLink ? "School invite ready" : "Invite school user"}
@@ -208,16 +236,21 @@ export function SchoolsPage() {
           <div className="space-y-4">
             <Alert tone="success">Invite created. Send this secure link to the school contact.</Alert>
             <Input label="Invite link" readOnly value={createdInviteLink} />
+            <Input label="Invite code" readOnly value={extractInviteToken(createdInviteLink)} />
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setCreatedInviteLink("")}>Create another</Button>
-              <Button onClick={copyInviteLink}>
+              <Button variant="outline" onClick={() => copyText(extractInviteToken(createdInviteLink), "Invite code copied.")}>
+                <Clipboard className="size-4" />
+                Copy code
+              </Button>
+              <Button onClick={() => copyText(createdInviteLink, "Invite link copied.")}>
                 <Clipboard className="size-4" />
                 Copy link
               </Button>
             </div>
           </div>
         ) : (
-          <SchoolInviteForm defaultEmail={inviteSchool?.contact_email ?? ""} onCancel={() => setInviteSchool(null)} onSubmit={inviteUser} />
+          <SchoolInviteForm defaults={inviteDefaults} onCancel={() => setInviteSchool(null)} onSubmit={inviteUser} />
         )}
       </Modal>
     </div>
@@ -264,16 +297,16 @@ function SchoolForm({
 }
 
 function SchoolInviteForm({
-  defaultEmail,
+  defaults,
   onCancel,
   onSubmit,
 }: {
-  defaultEmail: string;
+  defaults: { email: string; role: SchoolUserRole };
   onCancel: () => void;
   onSubmit: (email: string, role: SchoolUserRole) => Promise<void>;
 }) {
-  const [email, setEmail] = useState(defaultEmail);
-  const [role, setRole] = useState<SchoolUserRole>("Cover Manager");
+  const [email, setEmail] = useState(defaults.email);
+  const [role, setRole] = useState<SchoolUserRole>(defaults.role);
   const [isSaving, setIsSaving] = useState(false);
 
   const submit = async (event: FormEvent) => {
@@ -309,4 +342,13 @@ function Info({ label, value }: { label: string; value: string }) {
 
 function schoolName(schoolId: string, schools: School[]) {
   return schools.find((school) => school.id === schoolId)?.name ?? "School";
+}
+
+function extractInviteToken(value: string) {
+  try {
+    const url = new URL(value);
+    return url.searchParams.get("token") ?? value;
+  } catch {
+    return value;
+  }
 }

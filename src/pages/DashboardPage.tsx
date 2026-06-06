@@ -9,6 +9,7 @@ import {
   FileCheck2,
   FileUp,
   Plus,
+  School2,
   UsersRound,
 } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
@@ -259,6 +260,10 @@ export function DashboardPage() {
               <ButtonLink to="/candidates" variant="outline" className="justify-start">
                 <UsersRound className="size-4" />
                 Add Candidate
+              </ButtonLink>
+              <ButtonLink to="/schools" variant="outline" className="justify-start">
+                <School2 className="size-4" />
+                Add School / Invite Login
               </ButtonLink>
               <ButtonLink to="/jobs" variant="outline" className="justify-start">
                 <BriefcaseBusiness className="size-4" />
