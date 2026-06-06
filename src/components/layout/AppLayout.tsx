@@ -5,6 +5,8 @@ import {
   CalendarDays,
   CalendarClock,
   ClipboardList,
+  ClipboardCheck,
+  FileText,
   FileCheck2,
   LayoutDashboard,
   LogOut,
@@ -12,6 +14,7 @@ import {
   ShieldCheck,
   UserRound,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -28,10 +31,16 @@ import { NotificationBell } from "./NotificationBell";
 const sidebarItems = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Candidates", to: "/candidates", icon: UsersRound },
+  { label: "Availability", to: "/availability", icon: CalendarDays },
   { label: "Applications", to: "/applications", icon: ClipboardList },
+  { label: "Requests", to: "/booking-requests", icon: ClipboardCheck },
+  { label: "Bookings", to: "/bookings", icon: CalendarCheck },
   { label: "Jobs", to: "/jobs", icon: BriefcaseBusiness },
   { label: "Placements", to: "/placements", icon: CalendarCheck },
   { label: "Shifts", to: "/shifts", icon: CalendarDays },
+  { label: "Timesheets", to: "/timesheets", icon: CalendarClock },
+  { label: "Payroll", to: "/payroll", icon: WalletCards },
+  { label: "Invoices", to: "/invoices", icon: FileText },
   { label: "Compliance", to: "/compliance", icon: FileCheck2 },
   { label: "Follow-ups", to: "/follow-ups", icon: CalendarClock },
   { label: "Reports", to: "/reports", icon: BarChart3 },

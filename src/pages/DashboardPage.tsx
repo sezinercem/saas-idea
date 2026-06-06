@@ -23,6 +23,7 @@ import { useToast } from "../hooks/useToast";
 import { BarList } from "../features/dashboard/BarList";
 import { formatDate, fullName } from "../lib/format";
 import { getComplianceDashboard } from "../lib/compliance";
+import { getOperationsDashboard } from "../lib/operations";
 import { getDashboardMetrics } from "../lib/recruitment";
 import { listAgencyApplications, listAgencyBookingRequests, listAgencyShifts } from "../lib/portal";
 import { statusTone } from "../lib/status";
@@ -38,6 +39,7 @@ type PortalOperations = {
   pendingComplianceReviews: number;
   complianceBlockers: number;
 };
+type OperationsDashboard = Awaited<ReturnType<typeof getOperationsDashboard>>;
 
 const summaryCards = [
   {
@@ -81,18 +83,20 @@ export function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [clearance, setClearance] = useState<ClearanceDashboard | null>(null);
   const [portalOperations, setPortalOperations] = useState<PortalOperations | null>(null);
+  const [operations, setOperations] = useState<OperationsDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const displayName = profile?.full_name || user?.email;
 
   const loadMetrics = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [metricData, clearanceData, shifts, bookings, applications] = await Promise.all([
+      const [metricData, clearanceData, shifts, bookings, applications, operationsData] = await Promise.all([
         getDashboardMetrics(),
         agency ? getComplianceDashboard(agency.id) : Promise.resolve(null),
         listAgencyShifts(),
         listAgencyBookingRequests(),
         listAgencyApplications(),
+        getOperationsDashboard(),
       ]);
       setMetrics(metricData);
       setClearance(clearanceData);
@@ -103,6 +107,7 @@ export function DashboardPage() {
         pendingComplianceReviews: clearanceData?.pendingItems.length ?? 0,
         complianceBlockers: clearanceData?.nonCompliant ?? 0,
       });
+      setOperations(operationsData);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load dashboard.", "error");
     } finally {
@@ -174,6 +179,14 @@ export function DashboardPage() {
             </div>
           </Card>
         ))}
+      </section>
+
+      <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <OperationMetric label="Available Supply Staff Today" value={operations?.availableToday ?? 0} loading={isLoading} href="/availability" />
+        <OperationMetric label="Booking Fill Rate" value={`${operations?.fillRate ?? 0}%`} loading={isLoading} href="/bookings" />
+        <OperationMetric label="Revenue This Month" value={`£${Math.round(operations?.revenueThisMonth ?? 0).toLocaleString()}`} loading={isLoading} href="/invoices" />
+        <OperationMetric label="Payroll Liability" value={`£${Math.round(operations?.payrollLiability ?? 0).toLocaleString()}`} loading={isLoading} href="/payroll" />
+        <OperationMetric label="Gross Margin" value={`${operations?.grossMargin ?? 0}%`} loading={isLoading} href="/reports" />
       </section>
 
       <section className="mt-8 grid gap-6 xl:grid-cols-12">
@@ -400,6 +413,17 @@ function LoadingRows() {
 
 function PortalMetric({ label, suffix = "", value }: { label: string; suffix?: string; value: number }) {
   return <div className="rounded-lg border border-slate-200 p-3 dark:border-slate-800"><p className="text-2xl font-bold">{value}{suffix}</p><p className="mt-1 text-xs text-slate-500">{label}</p></div>;
+}
+
+function OperationMetric({ href, label, loading, value }: { href: string; label: string; loading: boolean; value: number | string }) {
+  return (
+    <ButtonLink to={href} variant="outline" className="h-auto justify-start rounded-xl p-4 text-left">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+        {loading ? <Skeleton className="mt-3 h-7 w-20" /> : <p className="mt-2 text-2xl font-bold text-slate-950 dark:text-white">{value}</p>}
+      </div>
+    </ButtonLink>
+  );
 }
 
 function MiniRecord({ extra, meta, title, tone }: { extra: string; meta: string; title: string; tone: BadgeTone }) {

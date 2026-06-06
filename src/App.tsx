@@ -23,10 +23,16 @@ const CandidateDetailPage = lazy(() =>
 );
 const CandidatesPage = lazy(() => import("./features/candidates/CandidatesPage").then((module) => ({ default: module.CandidatesPage })));
 const ApplicationsPage = lazy(() => import("./features/applications/ApplicationsPage").then((module) => ({ default: module.ApplicationsPage })));
+const AvailabilityPage = lazy(() => import("./features/availability/AvailabilityPage").then((module) => ({ default: module.AvailabilityPage })));
+const BookingRequestsPage = lazy(() => import("./features/bookings/BookingRequestsPage").then((module) => ({ default: module.BookingRequestsPage })));
+const BookingsPage = lazy(() => import("./features/bookings/BookingsPage").then((module) => ({ default: module.BookingsPage })));
+const InvoicesPage = lazy(() => import("./features/invoices/InvoicesPage").then((module) => ({ default: module.InvoicesPage })));
 const JobDetailPage = lazy(() => import("./features/jobs/JobDetailPage").then((module) => ({ default: module.JobDetailPage })));
 const JobsPage = lazy(() => import("./features/jobs/JobsPage").then((module) => ({ default: module.JobsPage })));
+const PayrollPage = lazy(() => import("./features/payroll/PayrollPage").then((module) => ({ default: module.PayrollPage })));
 const PlacementsPage = lazy(() => import("./features/placements/PlacementsPage").then((module) => ({ default: module.PlacementsPage })));
 const ShiftsPage = lazy(() => import("./features/shifts/ShiftsPage").then((module) => ({ default: module.ShiftsPage })));
+const TimesheetsPage = lazy(() => import("./features/timesheets/TimesheetsPage").then((module) => ({ default: module.TimesheetsPage })));
 const TeamPage = lazy(() => import("./features/team/TeamPage").then((module) => ({ default: module.TeamPage })));
 const CompliancePage = lazy(() => import("./features/compliance/CompliancePage").then((module) => ({ default: module.CompliancePage })));
 const ComplianceReviewPage = lazy(() =>
@@ -114,7 +120,10 @@ function App() {
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/candidates" element={<CandidatesPage />} />
                       <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+                      <Route path="/availability" element={<AvailabilityPage />} />
                       <Route path="/applications" element={<ApplicationsPage />} />
+                      <Route path="/booking-requests" element={<BookingRequestsPage />} />
+                      <Route path="/bookings" element={<BookingsPage />} />
                       <Route path="/jobs" element={<JobsPage />} />
                       <Route path="/jobs/:id" element={<JobDetailPage />} />
                       <Route path="/placements" element={<PlacementsPage />} />
@@ -135,6 +144,23 @@ function App() {
                         element={
                           <RoleGuard allowed={["owner", "admin", "compliance"]}>
                             <ComplianceReviewPage />
+                          </RoleGuard>
+                        }
+                      />
+                      <Route path="/timesheets" element={<TimesheetsPage />} />
+                      <Route
+                        path="/payroll"
+                        element={
+                          <RoleGuard allowed={["owner", "admin"]}>
+                            <PayrollPage />
+                          </RoleGuard>
+                        }
+                      />
+                      <Route
+                        path="/invoices"
+                        element={
+                          <RoleGuard allowed={["owner", "admin"]}>
+                            <InvoicesPage />
                           </RoleGuard>
                         }
                       />

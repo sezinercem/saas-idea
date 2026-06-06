@@ -11,3 +11,12 @@ export function formatDate(value?: string | null) {
     year: "numeric",
   }).format(new Date(value));
 }
+
+export function formatCurrency(value?: number | string | null) {
+  const amount = Number(value ?? 0);
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}

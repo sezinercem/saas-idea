@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAgency } from "../../hooks/useAgency";
 import { formatDate, fullName } from "../../lib/format";
 import { getCandidateClearance } from "../../lib/compliance";
+import { getCandidatePerformance } from "../../lib/operations";
 import { createCandidatePortalInvite, listAgencyApplicationsDetailed, listCandidatePortalInvites } from "../../lib/portal";
 import { getCandidate, listCandidatePlacements, updateCandidate, updateCandidateStatus } from "../../lib/recruitment";
 import { statusTone } from "../../lib/status";
@@ -26,6 +27,7 @@ import type { OverallClearanceStatus } from "../../types/agency";
 import type { PortalInvite } from "../../types/portal";
 import type { JobApplication } from "../../types/portal";
 import type { Candidate, CandidateInput, CandidateStatus, PlacementWithRelations } from "../../types/recruitment";
+type CandidatePerformance = Awaited<ReturnType<typeof getCandidatePerformance>>;
 
 export function CandidateDetailPage() {
   const { id } = useParams();
@@ -36,6 +38,7 @@ export function CandidateDetailPage() {
   const [placements, setPlacements] = useState<PlacementWithRelations[]>([]);
   const [portalInvites, setPortalInvites] = useState<PortalInvite[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [performance, setPerformance] = useState<CandidatePerformance | null>(null);
   const [activeTab, setActiveTab] = useState("Overview");
   const [clearanceStatus, setClearanceStatus] = useState<OverallClearanceStatus>("Non-Compliant");
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -49,17 +52,19 @@ export function CandidateDetailPage() {
 
     setIsLoading(true);
     try {
-      const [candidateRow, placementRows, clearance, invites, applicationRows] = await Promise.all([
+      const [candidateRow, placementRows, clearance, invites, applicationRows, performanceData] = await Promise.all([
         getCandidate(id),
         listCandidatePlacements(id),
         agency ? getCandidateClearance(agency.id, id) : Promise.resolve(null),
         canInvite ? listCandidatePortalInvites(id) : Promise.resolve([]),
         listAgencyApplicationsDetailed(),
+        getCandidatePerformance(id),
       ]);
       setCandidate(candidateRow);
       setPlacements(placementRows);
       setPortalInvites(invites);
       setApplications(applicationRows.filter((application) => application.candidate_id === id));
+      setPerformance(performanceData);
       if (clearance) setClearanceStatus(clearance.overallStatus);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to load candidate.", "error");
@@ -196,6 +201,29 @@ export function CandidateDetailPage() {
               value={candidate.status || "New"}
               onChange={(event) => handleStatusChange(event.target.value as CandidateStatus)}
             />
+          </div>
+        </Card> : null}
+
+        {activeTab === "Overview" ? <Card className="lg:col-span-7">
+          <h2 className="text-lg font-semibold">Performance tracking</h2>
+          <div className="mt-5 grid gap-4 sm:grid-cols-4">
+            <InfoBlock label="Placements completed" value={String(performance?.placementsCompleted ?? 0)} />
+            <InfoBlock label="Supply shifts worked" value={String(performance?.supplyShiftsWorked ?? 0)} />
+            <InfoBlock label="Cancellation rate" value={`${performance?.cancellationRate ?? 0}%`} />
+            <InfoBlock label="Reliability score" value={`${performance?.reliabilityScore ?? 0}`} />
+          </div>
+          <div className="mt-5">
+            <h3 className="text-sm font-semibold">School feedback history</h3>
+            {performance?.feedback.length ? (
+              <div className="mt-3 space-y-3">
+                {performance.feedback.slice(0, 3).map((feedback) => (
+                  <div key={feedback.id} className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800">
+                    <div className="flex justify-between gap-3"><strong>{feedback.school_name}</strong><span className="text-slate-500">{formatDate(feedback.created_at)}</span></div>
+                    <p className="mt-1 text-slate-500">Reliability {feedback.reliability}/5 · Professionalism {feedback.professionalism}/5 · Classroom {feedback.classroom_management}/5</p>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="mt-3 text-sm text-slate-500">No school feedback yet.</p>}
           </div>
         </Card> : null}
 

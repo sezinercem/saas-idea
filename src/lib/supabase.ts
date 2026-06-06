@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Profile } from "../types/profile";
+import type { BookingMatch, BookingRequest, CandidateAvailability, Invoice, School, SchoolFeedback, Timesheet } from "../types/operations";
 import type { Candidate, Job, Placement } from "../types/recruitment";
 import type {
   ActivityLog,
@@ -32,6 +33,59 @@ type Database = {
           created_at?: string | null;
         };
         Update: Partial<Omit<Candidate, "id" | "created_by" | "created_at">>;
+        Relationships: [];
+      };
+      schools: {
+        Row: School;
+        Insert: Omit<School, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<School, "id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      candidate_availability: {
+        Row: CandidateAvailability;
+        Insert: Omit<CandidateAvailability, "id" | "created_at" | "candidates"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<CandidateAvailability, "id" | "agency_id" | "created_at" | "candidates">>;
+        Relationships: [];
+      };
+      booking_requests: {
+        Row: BookingRequest;
+        Insert: Omit<BookingRequest, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<BookingRequest, "id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      booking_matches: {
+        Row: BookingMatch;
+        Insert: Omit<BookingMatch, "id" | "created_at" | "candidates"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<BookingMatch, "id" | "agency_id" | "booking_request_id" | "candidate_id" | "created_at" | "candidates">>;
+        Relationships: [];
+      };
+      timesheets: {
+        Row: Timesheet;
+        Insert: Omit<Timesheet, "id" | "created_at" | "approved_by" | "approved_at" | "rejection_reason" | "candidates"> & {
+          id?: string;
+          created_at?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          rejection_reason?: string | null;
+        };
+        Update: Partial<Omit<Timesheet, "id" | "agency_id" | "created_at" | "candidates">>;
+        Relationships: [];
+      };
+      invoices: {
+        Row: Invoice;
+        Insert: Omit<Invoice, "id" | "created_at" | "sent_at" | "paid_at"> & {
+          id?: string;
+          created_at?: string | null;
+          sent_at?: string | null;
+          paid_at?: string | null;
+        };
+        Update: Partial<Omit<Invoice, "id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      school_feedback: {
+        Row: SchoolFeedback;
+        Insert: Omit<SchoolFeedback, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<SchoolFeedback, "id" | "agency_id" | "candidate_id" | "created_at">>;
         Relationships: [];
       };
       agencies: {
