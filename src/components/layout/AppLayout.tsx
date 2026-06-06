@@ -63,9 +63,9 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white" style={brandStyleVars(agency?.primary_colour)}>
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-slate-200 bg-white px-5 py-6 lg:block dark:border-slate-800 dark:bg-slate-900">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col border-r border-slate-200 bg-white px-5 py-6 lg:flex dark:border-slate-800 dark:bg-slate-900">
         <Logo />
-        <nav className="mt-8 space-y-2">
+        <nav className="mt-8 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {sidebarItems.map((item) => (
             <NavLink
               key={item.to}
@@ -82,7 +82,7 @@ export function AppLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className="absolute bottom-6 left-5 right-5 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+        <div className="mt-5 shrink-0 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
           <div className="flex items-start gap-3">
             <span className="flex size-10 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
               <UserRound className="size-5" />
