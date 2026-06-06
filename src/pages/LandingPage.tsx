@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, CheckCircle2, FileCheck2, UsersRound } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, CheckCircle2, FileCheck2, GraduationCap, UsersRound } from "lucide-react";
 import { LandingNav } from "../components/layout/LandingNav";
 import { ButtonLink } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -26,6 +26,30 @@ const features = [
   },
 ];
 
+const loginOptions = [
+  {
+    title: "Recruiter workspace",
+    body: "Agency owners, admins, recruiters, and compliance teams manage the full operating system here.",
+    href: "/login",
+    cta: "Recruiter login",
+    icon: UsersRound,
+  },
+  {
+    title: "School portal",
+    body: "Schools request cover, track bookings, approve timesheets, and view invoices. Access is created by the agency.",
+    href: "/school/login",
+    cta: "School login",
+    icon: Building2,
+  },
+  {
+    title: "Candidate portal",
+    body: "Candidates complete compliance and view agency-only jobs or shifts after accepting an agency invite.",
+    href: "/portal/login",
+    cta: "Candidate login",
+    icon: GraduationCap,
+  },
+];
+
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
@@ -48,10 +72,16 @@ export function LandingPage() {
                   Start Free Trial
                   <ArrowRight className="size-4" />
                 </ButtonLink>
-                <ButtonLink to="/login" variant="outline" className="h-12 px-5">
-                  Login
+                <ButtonLink to="/school/login" variant="outline" className="h-12 px-5">
+                  School Login
+                </ButtonLink>
+                <ButtonLink to="/portal/login" variant="outline" className="h-12 px-5">
+                  Candidate Login
                 </ButtonLink>
               </div>
+              <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                Schools and candidates use invite-only access issued by their agency.
+              </p>
             </div>
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-black/30">
@@ -79,6 +109,31 @@ export function LandingPage() {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="login-options" className="border-b border-slate-200 bg-slate-100/70 py-20 dark:border-slate-800 dark:bg-slate-900/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-100">Choose your login</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Separate portals for agencies, schools, and candidates.</h2>
+              <p className="mt-4 text-slate-600 dark:text-slate-300">
+                RecruitFlow keeps each agency isolated. Schools and candidates only enter through an agency-issued invite or access code, so they never see another agency&apos;s jobs, bookings, documents, or data.
+              </p>
+            </div>
+            <div className="mt-10 grid gap-5 lg:grid-cols-3">
+              {loginOptions.map((option) => (
+                <Card key={option.title}>
+                  <option.icon className="size-7 text-brand-600 dark:text-brand-100" />
+                  <h3 className="mt-5 text-xl font-semibold">{option.title}</h3>
+                  <p className="mt-3 min-h-20 text-sm leading-6 text-slate-600 dark:text-slate-300">{option.body}</p>
+                  <ButtonLink to={option.href} className="mt-6 w-full">
+                    {option.cta}
+                    <ArrowRight className="size-4" />
+                  </ButtonLink>
+                </Card>
+              ))}
             </div>
           </div>
         </section>

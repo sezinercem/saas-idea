@@ -6,6 +6,7 @@ import { Logo } from "./Logo";
 
 const navItems = [
   { label: "Features", href: "#features" },
+  { label: "Login", href: "#login-options" },
   { label: "Pricing", href: "#pricing" },
 ];
 
@@ -29,7 +30,7 @@ export function LandingNav() {
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle />
-          <ButtonLink to="/login" variant="ghost">
+          <ButtonLink to="/#login-options" variant="ghost">
             Login
           </ButtonLink>
           <ButtonLink to="/signup">Start Free Trial</ButtonLink>
@@ -58,7 +59,7 @@ export function LandingNav() {
             ))}
             <div className="flex items-center gap-3 pt-2">
               <ThemeToggle />
-              <ButtonLink to="/login" variant="outline" className="flex-1">
+              <ButtonLink to="/#login-options" variant="outline" className="flex-1">
                 Login
               </ButtonLink>
               <ButtonLink to="/signup" className="flex-1">
