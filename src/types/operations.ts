@@ -8,6 +8,8 @@ export type BookingRequestStatus = "Open" | "Partially Filled" | "Filled" | "Can
 export type BookingWorkflowStage = "New Requests" | "Candidate Matching" | "Candidate Confirmed" | "School Confirmed" | "Completed";
 export type TimesheetStatus = "Draft" | "Submitted" | "Approved" | "Rejected" | "Paid";
 export type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue";
+export type SchoolUserRole = "School Admin" | "Business Manager" | "Cover Manager" | "Department Lead";
+export type SchoolPortalStatus = "Invited" | "Active" | "Suspended" | "Archived";
 
 export type School = {
   id: string;
@@ -17,6 +19,68 @@ export type School = {
   contact_name: string | null;
   contact_email: string | null;
   created_at: string | null;
+};
+
+export type SchoolUser = {
+  id: string;
+  school_id: string;
+  agency_id: string;
+  auth_user_id: string | null;
+  role: SchoolUserRole;
+  portal_status: SchoolPortalStatus;
+  invited_at: string | null;
+  accepted_at: string | null;
+  created_at: string | null;
+};
+
+export type SchoolInvite = {
+  id: string;
+  token_hash: string;
+  school_id: string;
+  agency_id: string;
+  email: string;
+  role: SchoolUserRole;
+  invited_by: string | null;
+  expires_at: string;
+  used_at: string | null;
+  created_at: string | null;
+};
+
+export type SchoolContact = {
+  id: string;
+  school_id: string;
+  agency_id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: SchoolUserRole;
+  created_at: string | null;
+};
+
+export type TimesheetApprovalHistory = {
+  id: string;
+  agency_id: string;
+  school_id: string | null;
+  timesheet_id: string;
+  school_user_id: string | null;
+  action: "Approved" | "Rejected" | "Changes Requested";
+  notes: string | null;
+  created_at: string | null;
+};
+
+export type SchoolPortalSession = {
+  schoolUser: SchoolUser;
+  school: School;
+};
+
+export type SchoolCandidateProfile = {
+  candidate_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string | null;
+  compliance_cleared: boolean;
+  experience_summary: string | null;
+  availability: string | null;
 };
 
 export type CandidateAvailability = {
@@ -122,3 +186,5 @@ export type AvailabilityInput = Omit<CandidateAvailability, "id" | "created_at" 
 export type BookingRequestInput = Omit<BookingRequest, "id" | "created_at" | "agency_id" | "created_by">;
 export type TimesheetInput = Omit<Timesheet, "id" | "created_at" | "agency_id" | "approved_by" | "approved_at" | "rejection_reason" | "candidates">;
 export type InvoiceInput = Omit<Invoice, "id" | "created_at" | "agency_id" | "sent_at" | "paid_at">;
+export type SchoolBookingRequestInput = Omit<BookingRequest, "id" | "created_at" | "agency_id" | "created_by" | "school_id" | "school_name">;
+export type SchoolContactInput = Omit<SchoolContact, "id" | "created_at" | "agency_id" | "school_id">;

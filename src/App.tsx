@@ -7,10 +7,12 @@ import { OnboardingRoute } from "./components/layout/OnboardingRoute";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { PortalRoute } from "./components/layout/PortalRoute";
 import { RoleGuard } from "./components/layout/RoleGuard";
+import { SchoolRoute } from "./components/layout/SchoolRoute";
 import { AgencyProvider } from "./context/AgencyContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { PortalProvider } from "./context/PortalContext";
+import { SchoolPortalProvider } from "./context/SchoolPortalContext";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignUpPage } from "./pages/SignUpPage";
@@ -57,6 +59,18 @@ const PortalApplicationsPage = lazy(() => import("./features/portal/PortalApplic
 const PortalBookingsPage = lazy(() => import("./features/portal/PortalBookingsPage").then((module) => ({ default: module.PortalBookingsPage })));
 const PortalDocumentsPage = lazy(() => import("./features/portal/PortalDocumentsPage").then((module) => ({ default: module.PortalDocumentsPage })));
 const PortalProfilePage = lazy(() => import("./features/portal/PortalProfilePage").then((module) => ({ default: module.PortalProfilePage })));
+const SchoolAcceptInvitePage = lazy(() => import("./features/school/SchoolAcceptInvitePage").then((module) => ({ default: module.SchoolAcceptInvitePage })));
+const SchoolBookingsPage = lazy(() => import("./features/school/SchoolBookingsPage").then((module) => ({ default: module.SchoolBookingsPage })));
+const SchoolCandidatesPage = lazy(() => import("./features/school/SchoolCandidatesPage").then((module) => ({ default: module.SchoolCandidatesPage })));
+const SchoolContactsPage = lazy(() => import("./features/school/SchoolContactsPage").then((module) => ({ default: module.SchoolContactsPage })));
+const SchoolDashboardPage = lazy(() => import("./features/school/SchoolDashboardPage").then((module) => ({ default: module.SchoolDashboardPage })));
+const SchoolForgotPasswordPage = lazy(() => import("./features/school/SchoolForgotPasswordPage").then((module) => ({ default: module.SchoolForgotPasswordPage })));
+const SchoolInvoicesPage = lazy(() => import("./features/school/SchoolInvoicesPage").then((module) => ({ default: module.SchoolInvoicesPage })));
+const SchoolLayout = lazy(() => import("./features/school/SchoolLayout").then((module) => ({ default: module.SchoolLayout })));
+const SchoolLoginPage = lazy(() => import("./features/school/SchoolLoginPage").then((module) => ({ default: module.SchoolLoginPage })));
+const SchoolRequestsPage = lazy(() => import("./features/school/SchoolRequestsPage").then((module) => ({ default: module.SchoolRequestsPage })));
+const SchoolResetPasswordPage = lazy(() => import("./features/school/SchoolResetPasswordPage").then((module) => ({ default: module.SchoolResetPasswordPage })));
+const SchoolTimesheetsPage = lazy(() => import("./features/school/SchoolTimesheetsPage").then((module) => ({ default: module.SchoolTimesheetsPage })));
 
 function RouteFallback() {
   return (
@@ -72,8 +86,9 @@ function App() {
       <ErrorBoundary>
         <AuthProvider>
           <PortalProvider>
-            <AgencyProvider>
-              <ToastProvider>
+            <SchoolPortalProvider>
+              <AgencyProvider>
+                <ToastProvider>
               <BrowserRouter>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
@@ -84,6 +99,10 @@ function App() {
                     <Route path="/portal/accept" element={<PortalAcceptPage />} />
                     <Route path="/portal/forgot-password" element={<PortalForgotPasswordPage />} />
                     <Route path="/portal/reset-password" element={<PortalResetPasswordPage />} />
+                    <Route path="/school/login" element={<SchoolLoginPage />} />
+                    <Route path="/school/accept-invite" element={<SchoolAcceptInvitePage />} />
+                    <Route path="/school/forgot-password" element={<SchoolForgotPasswordPage />} />
+                    <Route path="/school/reset-password" element={<SchoolResetPasswordPage />} />
                     <Route
                       element={
                         <PortalRoute>
@@ -99,6 +118,21 @@ function App() {
                       <Route path="/portal/bookings" element={<PortalBookingsPage />} />
                       <Route path="/portal/documents" element={<PortalDocumentsPage />} />
                       <Route path="/portal/profile" element={<PortalProfilePage />} />
+                    </Route>
+                    <Route
+                      element={
+                        <SchoolRoute>
+                          <SchoolLayout />
+                        </SchoolRoute>
+                      }
+                    >
+                      <Route path="/school" element={<SchoolDashboardPage />} />
+                      <Route path="/school/requests" element={<SchoolRequestsPage />} />
+                      <Route path="/school/bookings" element={<SchoolBookingsPage />} />
+                      <Route path="/school/candidates" element={<SchoolCandidatesPage />} />
+                      <Route path="/school/timesheets" element={<SchoolTimesheetsPage />} />
+                      <Route path="/school/invoices" element={<SchoolInvoicesPage />} />
+                      <Route path="/school/contacts" element={<SchoolContactsPage />} />
                     </Route>
                     <Route
                       path="/onboarding"
@@ -180,8 +214,9 @@ function App() {
                   </Routes>
                 </Suspense>
               </BrowserRouter>
-              </ToastProvider>
-            </AgencyProvider>
+                </ToastProvider>
+              </AgencyProvider>
+            </SchoolPortalProvider>
           </PortalProvider>
         </AuthProvider>
       </ErrorBoundary>

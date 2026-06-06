@@ -3,6 +3,7 @@ import { AgencyContext, type AgencyContextValue } from "./agency-context";
 import { useAuth } from "../hooks/useAuth";
 import { createAgencyForExistingUser, getCurrentAgency } from "../lib/agency";
 import { isActiveCandidatePortalUser } from "../lib/portal";
+import { isActiveSchoolPortalUser } from "../lib/schoolPortal";
 import type { Agency, AgencyMember } from "../types/agency";
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
@@ -21,7 +22,11 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
 
     setIsAgencyLoading(true);
     try {
-      const isPortalUser = Boolean(user.user_metadata?.candidate_portal) || (await isActiveCandidatePortalUser(user.id));
+      const isPortalUser =
+        Boolean(user.user_metadata?.candidate_portal) ||
+        Boolean(user.user_metadata?.school_portal) ||
+        (await isActiveCandidatePortalUser(user.id)) ||
+        (await isActiveSchoolPortalUser(user.id));
       if (isPortalUser) {
         setAgency(null);
         setMembership(null);

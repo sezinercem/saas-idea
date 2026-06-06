@@ -1,6 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Profile } from "../types/profile";
-import type { BookingMatch, BookingRequest, CandidateAvailability, Invoice, School, SchoolFeedback, Timesheet } from "../types/operations";
+import type {
+  BookingMatch,
+  BookingRequest,
+  CandidateAvailability,
+  Invoice,
+  School,
+  SchoolCandidateProfile,
+  SchoolContact,
+  SchoolFeedback,
+  SchoolInvite,
+  SchoolUser,
+  Timesheet,
+  TimesheetApprovalHistory,
+} from "../types/operations";
 import type { Candidate, Job, Placement } from "../types/recruitment";
 import type {
   ActivityLog,
@@ -39,6 +52,30 @@ type Database = {
         Row: School;
         Insert: Omit<School, "id" | "created_at"> & { id?: string; created_at?: string | null };
         Update: Partial<Omit<School, "id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      school_users: {
+        Row: SchoolUser;
+        Insert: Omit<SchoolUser, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<SchoolUser, "id" | "school_id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      school_invites: {
+        Row: SchoolInvite;
+        Insert: Omit<SchoolInvite, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<SchoolInvite, "id" | "school_id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      school_contacts: {
+        Row: SchoolContact;
+        Insert: Omit<SchoolContact, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<SchoolContact, "id" | "school_id" | "agency_id" | "created_at">>;
+        Relationships: [];
+      };
+      timesheet_approval_history: {
+        Row: TimesheetApprovalHistory;
+        Insert: Omit<TimesheetApprovalHistory, "id" | "created_at"> & { id?: string; created_at?: string | null };
+        Update: Partial<Omit<TimesheetApprovalHistory, "id" | "agency_id" | "school_id" | "timesheet_id" | "school_user_id" | "created_at">>;
         Relationships: [];
       };
       candidate_availability: {
@@ -293,6 +330,23 @@ type Database = {
       };
       accept_portal_invite: { Args: { raw_token: string }; Returns: string };
       create_team_invite: { Args: { target_agency_id: string; target_email: string; target_role: string }; Returns: string };
+      create_school_invite: {
+        Args: { target_school_id: string; target_email: string; target_role: string; invite_token_hash: string; invite_expires_at: string };
+        Returns: string;
+      };
+      school_invite_preview: {
+        Args: { raw_token: string };
+        Returns: Array<{
+          school_name: string;
+          agency_name: string;
+          email: string;
+          role: string;
+          expires_at: string;
+          invite_state: "Valid" | "Used" | "Expired";
+        }>;
+      };
+      accept_school_invite: { Args: { raw_token: string }; Returns: string };
+      school_candidate_profiles: { Args: Record<string, never>; Returns: SchoolCandidateProfile[] };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
